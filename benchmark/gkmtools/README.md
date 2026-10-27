@@ -63,6 +63,26 @@ julia --compiled-modules=existing --startup-file=no \
   --project=benchmark/gkmtools benchmark/gkmtools/weyl_checks.jl
 ```
 
+The CLI scripts are thin wrappers around the private `GKMtoolsBenchmarks` module.
+Including `GKMtoolsBenchmarks.jl` defines helpers without running computations or
+adding their names to `Main`. `benchmark_config(args, environment)` accepts an
+explicit environment dictionary, and configuration is validated before geometry
+construction. Native models, prepared integration, execution, and Weyl checks
+live in separate files. TOML dictionaries are confined to reporting; a function
+barrier specializes each timed computation on its actual callable.
+
+Run the comparison-tool tests separately from the production package suite:
+
+```sh
+julia --compiled-modules=existing --startup-file=no --check-bounds=yes \
+  --project=benchmark/gkmtools benchmark/gkmtools/runtests.jl
+```
+
+They check input validation, preservation of an earlier checkpoint after a
+serialization failure, and coefficient agreement for a cubic and the Picard-rank
+two K3-29 model. Saved checkpoints are completely serialized in a temporary file
+before replacement; a partial serialization cannot overwrite completed results.
+
 ## What is compared
 
 `Models.jl` constructs each geometry independently with the native constructors

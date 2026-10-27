@@ -19,6 +19,13 @@ Use the same Julia version, dependency manifest, and otherwise idle machine
 for comparisons. These measurements describe the selected workloads; they
 are not promises about larger curve degrees or other targets.
 
+The script defines a `GromovWittenBenchmarks` module and runs through a CLI guard,
+so it can also be included without starting a benchmark. Each sample must equal
+its warm reference; those comparisons are outside timing. The `degree search`
+and `curve search` workloads isolate recursive enumeration from localization,
+using 20,000 and 10,000 repetitions respectively. They help identify Julia
+closure and allocation regressions without relying on a complete quantum matrix.
+
 ## Review comparison
 
 Measured on the same macOS host with Julia 1.13.0, sequentially, using three

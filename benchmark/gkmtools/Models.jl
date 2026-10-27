@@ -127,6 +127,15 @@ function homogeneous_basis(X, G, classes; basis_lift::Symbol=:billey)
   basis, [GK.curve_class(G, edge)], [edge]
 end
 
+"""Multiply Oscar simple reflections in word order, using the same right-action convention."""
+function word_to_weyl(letters, W, reflections)
+  result = one(W)
+  for letter in letters
+    result *= reflections[Int(letter)]
+  end
+  result
+end
+
 """Recover an Oscar Weyl element from an image permutation by undoing adjacent inversions."""
 function permutation_to_weyl(flag, W, reflections)
   permutation = collect(flag)
@@ -136,11 +145,7 @@ function permutation_to_weyl(flag, W, reflections)
     push!(undo, i)
     permutation[i], permutation[i + 1] = permutation[i + 1], permutation[i]
   end
-  result = one(W)
-  for i in Iterators.reverse(undo)
-    result *= reflections[i]
-  end
-  result
+  word_to_weyl(Iterators.reverse(undo), W, reflections)
 end
 
 """
@@ -158,10 +163,7 @@ function billey_basis(G, classes, flags, variables)
   reflections = OS.reflection.(OS.simple_roots(R))
   fixed = [permutation_to_weyl(flag, W, reflections) for flag in flags]
   map(classes) do class
-    u = one(W)
-    for s in SS.word(class)
-      u *= reflections[Int(s)]
-    end
+    u = word_to_weyl(SS.word(class), W, reflections)
     length(u) == length(class) || error("word transport changed codimension")
     interval = GK._bruhat_lower_interval(u, reflections)
     values = [GK._billey_localization(G, u, v, variables, interval) for v in fixed]
