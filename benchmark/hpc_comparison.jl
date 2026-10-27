@@ -121,10 +121,11 @@ function period_coefficients(matrix, codimensions, chern_coordinates, order=100)
 end
 
 """
-Run one complete matrix after warming the classical term and one nonzero curve.
-Use a fresh process per engine and case. The single full sample includes any
-remaining compilation; its measured compilation time is recorded separately.
-The input TOML supplies the original full beta list and archived source hash.
+Run one complete matrix, normally warming the classical term and one nonzero
+curve first. Set `warmup = false` in the input for a fresh matrix call. Use a
+fresh process per engine and case. The single full sample includes compilation;
+its measured compilation time is recorded separately. The input TOML supplies
+the original full beta list and archived source hash.
 """
 function run_case(backend, input_path, output)
   backend in ("old", "new") || error("backend must be old or new")
@@ -161,18 +162,24 @@ function measure_case(engine, backend, input, output, source_hash)
     c = Int[c_full[i] for i in PFV.marked_nodes(X)]
     @assert c == input["anticanonical_coordinates"]
   end
-  warmup_betas = betas[1:min(2, length(betas))]
-  progress(label, backend, "warming classical term and first nonzero curve")
-  warmup = @timed engine.small_quantum_multiplication(Z; betas=warmup_betas)
+  warmup_enabled = get(input, "warmup", true)
+  warmup_betas = Vector{Int}[]
+  warmup_seconds = 0.0
+  if warmup_enabled
+    warmup_betas = betas[1:min(2, length(betas))]
+    progress(label, backend, "warming classical term and first nonzero curve")
+    warmup = @timed engine.small_quantum_multiplication(Z; betas=warmup_betas)
+    warmup_seconds = warmup.time
+  end
   checkpoint(
     output * ".progress.toml",
     Dict(
       "label" => label, "backend" => backend, "phase" => "full quantum matrix",
-      "warmup_seconds" => warmup.time, "warmup_betas" => warmup_betas,
+      "warmup_seconds" => warmup_seconds, "warmup_betas" => warmup_betas,
     ),
   )
   GC.gc()
-  progress(label, backend, "full quantum matrix; warmup $(warmup.time) s")
+  progress(label, backend, "full quantum matrix; warmup $warmup_seconds s")
   timing = @timed engine.small_quantum_multiplication(Z; betas)
   result = timing.value
   progress(label, backend, "matrix complete in $(timing.time) s; period recurrence")
@@ -187,7 +194,8 @@ function measure_case(engine, backend, input, output, source_hash)
     "threads" => Threads.nthreads(), "gc_threads" => Threads.ngcthreads(),
     "blas_threads" => BLAS.get_num_threads(), "cpu" => Sys.CPU_NAME,
     "construction_seconds" => construction.time,
-    "warmup_seconds" => warmup.time, "warmup_betas" => warmup_betas,
+    "warmup_seconds" => warmup_seconds, "warmup_betas" => warmup_betas,
+    "measurement_mode" => warmup_enabled ? "short warmup" : "cold",
     "matrix_seconds" => timing.time, "matrix_allocated_bytes" => timing.bytes,
     "matrix_gc_seconds" => timing.gctime, "matrix_compile_seconds" => timing.compile_time,
     "period_seconds" => period_run.time, "observed_utc" => string(now(UTC)),

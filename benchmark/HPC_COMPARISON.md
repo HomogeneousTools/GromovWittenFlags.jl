@@ -50,6 +50,12 @@ reported separately. Remaining compilation is included in matrix time and
 recorded explicitly; these are single samples, not medians or fully warmed
 measurements. Allocated bytes measure cumulative allocation, not resident memory.
 
+Set `warmup = false` in the input TOML to measure the first full matrix call
+in a fresh process. Geometry construction and automatic curve enumeration still
+precede the matrix timer. Record these calls separately from measurements after
+the short warm-up: another implementation can populate substantial numerical
+caches during that warm-up. First-call timings include matrix compilation.
+
 The output includes every exact Novikov coefficient, the metric, basis keys,
 codimensions, grading, curve classes, and both ordinary and regularized period
 coefficients through order 100. Compare all of these against the saved HPC
