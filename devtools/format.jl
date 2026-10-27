@@ -13,7 +13,8 @@ const PACKAGE_ROOT = dirname(@__DIR__)
 files = String[]
 for directory in ("src", "test", "examples", "benchmark", "devtools", "docs")
   for (root, dirs, names) in walkdir(joinpath(PACKAGE_ROOT, directory))
-    filter!(!=("build"), dirs)
+    # Local benchmark archives can contain immutable historical Julia sources.
+    filter!(directory -> directory ∉ ("build", "hpc-local"), dirs)
     append!(files, [joinpath(root, name) for name in names if endswith(name, ".jl")])
   end
 end

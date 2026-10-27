@@ -5,3 +5,4 @@ docs/build/
 *.mem
 lcov.info
 benchmark/gkmtools/results-local.toml
+benchmark/hpc-local/

@@ -4,6 +4,10 @@ For cross-library Fano fourfold measurements, see the isolated
 [GKMtools comparison](gkmtools/RESULTS.md) and its
 [reproduction instructions](gkmtools/README.md).
 
+For complete local comparisons against an archived HPC numerical engine, see
+[the HPC comparison protocol](HPC_COMPARISON.md). Case inputs and scientific
+outputs can be kept privately in the ignored `benchmark/hpc-local/` directory.
+
 Run from the package checkout:
 
 ```sh
