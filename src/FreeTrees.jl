@@ -1,14 +1,16 @@
-# Constant-time free-tree generation of Wright--Richmond--Odlyzko--McKay.
+# Free-tree generation using the Wright--Richmond--Odlyzko--McKay successor.
 # This compact iterator is adapted from the MIT-licensed GKMtools.jl
 # implementation by Csaba Schneider and Giosuè Muratore.
 """
     _FreeTreeIterator(n)
 
 Enumerate one preorder depth sequence for every unrooted tree on `n` vertices
-using the Wright–Richmond–Odlyzko–McKay constant-delay algorithm. Each yielded
+using the Wright–Richmond–Odlyzko–McKay successor algorithm. Each yielded
 vector is owned by the caller; the mutable successor state never aliases it.
 Depth one is the root, and edge parents are the last preceding vertices one
 level closer to the root. See the retained GKMtools notice for provenance.
+Copying the owned vector costs `O(n)` per yield; the iterator does not promise
+constant-time delivery of an entire depth sequence.
 """
 struct _FreeTreeIterator
   n::Int

@@ -59,7 +59,8 @@ whose mathematical or ownership invariants are easy to overlook.
 
 ## Validation and limits
 
-The default suite passes 2,564 checks with bounds checking, including Aqua.
+At extraction-review commit `4a8f864`, the default suite passed 2,564 checks
+with bounds checking, including Aqua.
 It compares Schubert restrictions against literal subword enumeration and
 marked sums against explicit labeled placements with marked stabilizers.
 Graph colorings are checked against brute force on complete and irregular
@@ -67,7 +68,7 @@ graphs; known star symmetries test the large-tree fallback. Complete smaller
 fourfold matrices and exact Küchle coefficients through degree three complement
 independent enumerative values.
 
-The extended suite passes all 2,567 checks, including the complete degree-five
+The extended suite at that commit passed all 2,567 checks, including the complete degree-five
 Küchle c5 and b8 matrices, with bounds checking enabled (21m34s locally).
 
 Strict documentation, doctests, executable examples, and pinned formatting
@@ -80,3 +81,36 @@ torus points checks consistency and does not prove the localization formula.
 The defining section must satisfy the documented geometric assumptions.
 Quantum matrices describe the ambient projection; they do not supply missing
 primitive cohomology. These limitations are stated in the public manual.
+
+## Julia idiom and documentation follow-up
+
+The follow-up removes boxed captures in four production methods. Both degree
+searches now use named recursive workers with explicit scratch arguments;
+the degree-orbit key consumes the chosen permutation without capturing a
+reassigned binding; the pair-block support probe has its own evaluation binding.
+The enumeration workloads in `benchmark/benchmarks.jl` isolate these costs.
+
+The large-tree encoder returns its key and symmetry order together, replacing
+a shared mutable counter. Torus evaluations no longer retain unused tangent
+Euler and input-weight fields. Restriction tables live in the numeric layer;
+the invariant layer selects the pair-block optimization. Redundant coordinate
+validation and duplicate root–coroot arithmetic were removed.
+
+Public docstrings now contain executable examples and describe return fields,
+coordinate conventions, and ownership. Private contracts distinguish full
+Schubert indices, block positions, local roots, and cover degrees. The internal
+manual maps the call layers and explains scratch restoration, cache effects,
+and callback lifetimes. The free-tree documentation accounts for the owned
+output copy, and coloring documentation states its normalized-rooting precondition.
+
+Benchmark tools live in dedicated modules with CLI guards, explicit configuration,
+specialized measurement callables, and separate model, runner, and Weyl-check files.
+Checkpoint serialization failures preserve the last completed file. Their isolated
+tests exercise configuration, checkpoint failure handling, word transport, and
+native/prepared coefficient agreement on a cubic and K3-29.
+
+The follow-up default suite passes 2,595 checks with bounds checking, including
+Aqua and independent finite-curve enumeration checks. Strict Documenter checks,
+public and private docstrings, doctests, and all benchmark reference comparisons
+pass. The degree-five extended-suite result above belongs to the earlier
+extraction-review commit.

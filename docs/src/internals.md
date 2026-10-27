@@ -7,6 +7,39 @@ The mathematical reference is the root-theoretic localization construction in
 The geometric assumptions and the ambient projection are described in
 [Conventions and scope](@ref).
 
+## Following a computation
+
+The public boundary validates geometry, converts curve coordinates, and resolves
+insertions to integer Schubert indices. Arithmetic then runs on concrete cached
+root data. The files follow this order:
+
+| Layer | Files | Responsibility |
+|:--|:--|:--|
+| Geometry | `Schubert.jl`, `Bundles.jl` | Cosets, acted roots, curves, and defining weights |
+| Fixed graphs | `FreeTrees.jl`, `TreeSymmetries.jl`, `Colorings.jl`, `DecoratedTrees.jl` | Tree orbits, stabilizers, and borrowed workspaces |
+| Numeric kernels | `ExactSums.jl`, `Localization.jl` | Exact torus values, restrictions, and vertex/edge contributions |
+| Shared insertions | `QuantumBlocks.jl` | Two-point blocks with shared graph enumeration |
+| Public invariants | `Invariants.jl` | Input guards, dimension axiom, and specialization orchestration |
+| Quantum assembly | `Novikov.jl`, `ExactLinearAlgebra.jl`, `Quantum.jl` | Ambient quotient, metric solves, and sparse coefficients |
+
+The low-level localization file does not call the higher-level pair-block
+dispatcher. [`GromovWittenFlags._checked_localization`](@ref) chooses that
+optimization in the invariant layer. Restriction tables belong to the numeric
+layer because both general invariants and pair blocks use them.
+
+Several integers have different meanings. Preserve these distinctions when
+adding a kernel; names such as `root`, `class`, and `index` alone are insufficient
+at a boundary between these conventions:
+
+| Quantity | Meaning |
+|:--|:--|
+| Fixed-point color / full Schubert index | Position in `data.representatives` |
+| Local root index `q` | Position in `data.nonparabolic_indices` and `data.curve_classes` |
+| Ambient positive-root index | `data.nonparabolic_indices[q]` |
+| Block class index `i` | Position in a supplied `classes` map; `classes[i]` is a full Schubert index |
+| Curve coordinate `beta[p]` | Degree at ambient Dynkin node `marked_nodes(X)[p]` |
+| Cover degree | Positive multiplicity on a single invariant edge |
+
 ## Structural data and ownership
 
 [`GromovWittenFlags._GWData`](@ref) belongs to one marked Dynkin type.
@@ -22,6 +55,13 @@ Torus-independent root coordinates use fixed-size integer vectors;
 specialization evaluates their integral linear forms before converting to
 `Rational{BigInt}`. Machine-integer degree bounds use checked arithmetic.
 
+The heterogeneous variety dictionary and large-tree tuple encodings are
+deliberate boundaries. Hot arithmetic does not use `Any`-typed fields. A torus
+evaluation stores the fiber values and splittings needed by its own target;
+it does not retain the input weight list or an unused copy of tangent Euler
+classes. Twisted and untwisted evaluations share the same concrete scalar-based
+layout.
+
 Public Schubert constructors copy the Weyl word. Mutating a returned word
 therefore cannot corrupt the cache. A public [`NovikovPolynomial`](@ref)
 constructor likewise owns a normalized copy of its input dictionary.
@@ -32,6 +72,12 @@ Their arrays are shared and treated as read-only. Cache insertion is protected
 by locks; each computation owns its arithmetic caches and mutable workspace.
 [`clear_localization_caches!`](@ref) releases the structural cache entries.
 Existing computations retain their own references to data already obtained.
+
+Mutating workspace helpers use `!` and document which buffers they overwrite.
+Memoized readers such as `_billey` and `_edge_factor` may populate their private
+caches; their mathematical values and geometry remain unchanged. These effects
+are explicit in their docstrings. Callback consumers must treat borrowed graph
+arrays as read-only, as well as avoiding references that outlive a callback.
 
 ## Schubert restrictions
 
@@ -71,6 +117,14 @@ Suffix sums reserve the minimum class needed by the remaining edges, and the
 last edge degree is solved directly. The all-unit case bypasses degree-orbit
 keys. A rooted calculation restricts automorphisms to those fixing the
 distinguished vertex and uses one rooted shape per uncolored vertex orbit.
+
+The cover and finite-curve searches use named recursive workers with explicit
+scratch arguments. A recursive local function can capture its own binding in a
+`Core.Box`; passing state explicitly avoids that dispatch and allocation cost.
+The degree worker restores its remaining budget after each branch and copies
+nothing for a callback. The finite-curve worker copies a vector only when it
+appends a complete result. The large-tree encoder returns its key and symmetry
+order together, so it needs no shared mutable counter.
 
 [`GromovWittenFlags._foreach_unmarked_decorated_tree`](@ref) and
 [`GromovWittenFlags._foreach_rooted_decorated_tree`](@ref) are synchronous

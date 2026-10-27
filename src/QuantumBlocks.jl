@@ -1,18 +1,4 @@
 """
-    _restriction_table(evaluation, classes)
-
-Materialize Schubert restrictions with rows indexed by fixed-point colors and
-columns by the supplied class indices. Reusing these tables removes dictionary
-lookups and Weyl operations from the decorated-tree summation loop.
-"""
-function _restriction_table(evaluation::_GWEvaluation{D,T}, classes) where {D,T}
-  T[
-    _billey(evaluation, class, color)
-    for color in eachindex(evaluation.data.representatives), class in classes
-  ]
-end
-
-"""
     _positive_degree_single_pair_blocks(evaluations, classes, pair, beta, anchor_first)
 
 Two-point localization using a marked root when one insertion has small
@@ -61,15 +47,18 @@ vertex sum. Their product sums every labeled placement; division by the
 unmarked automorphism order gives exactly the marked-orbit multiplicities.
 Only vertices and insertion pairs with nonzero restrictions reach edge-factor
 arithmetic. A singleton pair with small support uses the rooted algorithm.
+`classes` maps the block's local indices to full Schubert indices; each pair
+indexes that map. Return one vector per evaluation, in `pairs` order. The
+input geometry, class map, pairs, and curve coordinates are read-only.
 """
 function _positive_degree_pair_blocks(evaluations, classes, pairs, beta)
   data = first(evaluations).data
   if length(pairs) == 1
     i, j = only(pairs)
-    evaluation = first(evaluations)
-    support_i = count(color -> !iszero(_billey(evaluation, classes[i], color)),
+    first_evaluation = first(evaluations)
+    support_i = count(color -> !iszero(_billey(first_evaluation, classes[i], color)),
       eachindex(data.representatives))
-    support_j = count(color -> !iszero(_billey(evaluation, classes[j], color)),
+    support_j = count(color -> !iszero(_billey(first_evaluation, classes[j], color)),
       eachindex(data.representatives))
     if min(support_i, support_j) <= max(2, length(data.representatives) ÷ 4)
       return _positive_degree_single_pair_blocks(evaluations, classes, only(pairs),

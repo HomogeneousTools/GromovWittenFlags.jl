@@ -1,9 +1,10 @@
 """
-    _GWEvaluation{D,T,W}
+    _GWEvaluation{D,T}
 
 One exact torus specialization for one target. Root values and Schubert
-restrictions use scalar type `T`; `weights` binds this evaluation to a single
-defining bundle, so the Euler-factor caches cannot be reused for another twist.
+restrictions use scalar type `T`. The specialized fiber values and cover
+splittings bind this evaluation to one defining bundle, so the Euler-factor
+caches cannot be reused for another twist. The input weight vector is not retained.
 All caches are local to the computation and require no global arithmetic state.
 
 `vertex_euler[color]` is the tangent Euler class divided by the bundle Euler
@@ -11,13 +12,11 @@ class. Edge factors exclude endpoint Euler classes, which have been collected
 at vertices according to their valence. This reduces large intermediate
 numerators and denominators before summing localization contributions.
 """
-struct _GWEvaluation{D,T,W}
+struct _GWEvaluation{D,T}
   data::D
   point::Vector{T}
   root_values::Matrix{T}
   word_values::Vector{Vector{T}}
-  rfactor::Vector{T}
-  weights::W
   fiber_values::Matrix{T}
   splittings::Matrix{Int}
   vertex_euler::Vector{T}
@@ -71,16 +70,16 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
   point = T.(coordinates)
   values = map(c -> T(_root_value(c, coordinates)), data.root_coordinates)
   word_values = [T[_root_value(c, coordinates) for c in roots] for roots in data.word_roots]
-  rfactor = T[
+  tangent_euler = T[
     prod((-values[color, root] for root in data.nonparabolic_indices); init=one(T))
     for color in eachindex(data.representatives)
   ]
-  any(iszero, rfactor) && throw(DivideError())
+  any(iszero, tangent_euler) && throw(DivideError())
 
   n_weights = weights === nothing ? 0 : length(weights)
-  fiber_values = Matrix{T}(undef, length(rfactor), n_weights)
+  fiber_values = Matrix{T}(undef, length(tangent_euler), n_weights)
   splittings = Matrix{Int}(undef, n_weights, length(data.nonparabolic_indices))
-  vertex_euler = copy(rfactor)
+  vertex_euler = copy(tangent_euler)
   if n_weights > 0
     # Fundamental-weight coordinates must be converted to simple-root
     # coordinates before evaluation. The minus sign converts the package's
@@ -95,17 +94,23 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
         splittings[j, q] = _root_coroot_pairing(weight, data.positive_coroots[root])
       end
     end
-    for color in eachindex(rfactor)
+    for color in eachindex(tangent_euler)
       bundle_euler = prod(@view fiber_values[color, :])
-      vertex_euler[color] = _divide_or_pole(rfactor[color], bundle_euler)
+      vertex_euler[color] = _divide_or_pole(tangent_euler[color], bundle_euler)
     end
   end
-  _GWEvaluation(data, point, values, word_values, rfactor, weights, fiber_values,
+  _GWEvaluation(data, point, values, word_values, fiber_values,
     splittings, vertex_euler, Dict{Tuple{Int,Int},T}(), Dict{NTuple{3,Int},T}(),
     Dict{NTuple{3,Int},NTuple{2,T}}(), Dict{NTuple{5,Int},NTuple{2,T}}())
 end
 
-"""Resolve an insertion to a cached coset index, rejecting incompatible Dynkin types."""
+"""
+    _class_index(data, class)
+
+Return the fixed-point/Schubert index of the coset represented by `class`.
+The ambient Dynkin type must match `data`; the word need not be a minimal
+coset representative. Incompatible insertions raise `ArgumentError`.
+"""
 function _class_index(data::_GWData{DT,R}, class::WeylGroupElem{DT,R}) where {DT,R}
   data.representative_index[coefficients(data.stabilizer_weight * inv(class))]
 end
@@ -120,6 +125,9 @@ Evaluate Billey's reduced-subword formula for a Schubert class at a fixed
 point. The cached automaton retains only prefixes that can reach the target.
 States are updated in descending length, so a reduced-word letter is used
 at most once. The diagonal restriction is simply the product of word roots.
+Both integer arguments index `evaluation.data.representatives`. This
+memoized reader updates `evaluation.billey` and may build a structural plan;
+it never changes the geometry or an already computed restriction.
 """
 function _billey(evaluation::_GWEvaluation{D,T}, class_index::Int,
   vertex_index::Int) where {D,T}
@@ -146,12 +154,32 @@ function _billey(evaluation::_GWEvaluation{D,T}, class_index::Int,
 end
 
 """
+    _restriction_table(evaluation, classes)
+
+Materialize Schubert restrictions with rows indexed by fixed-point colors and
+columns by the supplied class indices. Reusing these tables removes dictionary
+lookups and Weyl operations from the decorated-tree summation loop.
+`classes` contains indices into the full cached Schubert basis. The returned
+matrix has its own storage; populating it may fill the evaluation's Billey cache.
+"""
+function _restriction_table(evaluation::_GWEvaluation{D,T}, classes) where {D,T}
+  T[
+    _billey(evaluation, class, color)
+    for color in eachindex(evaluation.data.representatives), class in classes
+  ]
+end
+
+"""
     _edge_factor(evaluation, color, root, degree)
 
 Moving-edge localization contribution, including the cover factor `1/degree`
 and the bundle Euler twist, but excluding endpoint tangent Euler classes.
 The latter combine at each vertex as `vertex_euler^(valence - 1)`.
 The root–coroot pairing in the edge formula is cached before specialization.
+`color` indexes fixed points, `root` indexes `data.nonparabolic_indices`, and
+`degree` is a positive covering multiplicity, not an ambient curve vector.
+The value is memoized in this evaluation; a zero moving denominator raises
+`DivideError` so the caller can retry the entire torus specialization.
 """
 function _edge_factor(evaluation::_GWEvaluation{D,T}, color::Int,
   root::Int, degree::Int) where {D,T}
@@ -211,7 +239,14 @@ function _prepare_edges!(evaluation::_GWEvaluation, beta)
   nothing
 end
 
-"""Cache inverse tangent weights at both ends of a covered invariant curve."""
+"""
+    _inverse_tangent_weights(evaluation, color, root, degree)
+
+Return the cached inverse tangent weights `(source, target)` of a covered
+curve, oriented from `color`. `root` is local to that source fixed point and
+`degree` is its positive cover degree. Reversing orientation exchanges the
+two signs. The vertex formula chooses the entry incident to its own vertex.
+"""
 function _inverse_tangent_weights(evaluation::_GWEvaluation{D,T}, color::Int,
   root::Int, degree::Int) where {D,T}
   get!(evaluation.inverse_flags, (color, root, degree)) do
@@ -283,7 +318,14 @@ function _vertex_factors(evaluation::_GWEvaluation, tree::_DecoratedTree, vertex
   end
 end
 
-"""Fill borrowed mark weights and multiply all zero-mark vertex contributions."""
+"""
+    _vertex_product!(mark_weights, evaluation, tree)
+
+Fill `mark_weights[1:length(tree.colors)]` with the factor contributed by an
+additional labeled mark at each vertex. Return the product of zero-mark vertex
+factors. The buffer must be long enough; its unused suffix is left unchanged.
+The tree is read-only. Evaluation-local vertex caches may be populated.
+"""
 function _vertex_product!(mark_weights, evaluation::_GWEvaluation{D,T},
   tree::_DecoratedTree) where {D,T}
   factor = one(T)
@@ -397,20 +439,4 @@ function _checked_torus_evaluations(f::F, data::_GWData, weights) where {F}
     end
   end
   error("localization encountered poles at every exact torus-point pair")
-end
-
-"""Dispatch degree-zero integration or shared positive-degree graph evaluation with exact checks."""
-function _checked_localization(data::_GWData, classes, beta, weights)
-  _checked_torus_evaluations(data, weights) do evaluations
-    if all(iszero, beta)
-      return map(evaluation -> _degree_zero_invariant(evaluation, classes), evaluations)
-    end
-    foreach(evaluation -> _prepare_edges!(evaluation, beta), evaluations)
-    if length(classes) == 2
-      blocks = _positive_degree_pair_blocks(evaluations, classes, [(1, 2)], beta)
-      map(only, blocks)
-    else
-      _positive_degree_invariants(evaluations, classes, beta)
-    end
-  end
 end

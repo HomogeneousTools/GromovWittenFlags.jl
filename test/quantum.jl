@@ -1,3 +1,16 @@
+@testset "Finite curve search versus bounded lattice enumeration" begin
+  for coefficients in ([1, 2], [2, 3]), bound in 0:6
+    actual = GWF._compact_beta_vectors(coefficients, bound)
+    expected = [
+      collect(beta) for beta in Iterators.product(0:bound, 0:bound)
+      if sum(coefficients .* beta) <= bound
+    ]
+    sort!(expected; by=beta -> (sum(beta), beta))
+    @test actual == expected
+    @test length(unique(objectid.(actual))) == length(actual)
+  end
+end
+
 @testset "Small quantum multiplication" begin
   for n in 1:3
     X = projective_space(n)

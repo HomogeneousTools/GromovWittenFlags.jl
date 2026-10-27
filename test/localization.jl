@@ -165,4 +165,15 @@ end
     end
     @test actual == expected
   end
+  # The callback sees a reusable buffer. Retaining copies must preserve all
+  # assignments, and enumeration must leave caller-supplied inputs alone.
+  root = only(findall(==([1, 0]), data.curve_classes))
+  roots, beta = [root, root], [4, 0]
+  retained = Vector{Int}[]
+  GWF._foreach_degree_assignment(data, roots, beta) do degrees
+    push!(retained, copy(degrees))
+  end
+  @test Set(Tuple.(retained)) == Set(((1, 3), (2, 2), (3, 1)))
+  @test roots == [root, root] && beta == [4, 0]
+  @test length(unique(objectid.(retained))) == 3
 end

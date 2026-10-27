@@ -5,9 +5,12 @@
 """
     _ColoringIterator(levels, neighbors; fixed_root=false, root_color=1)
 
-Enumerate graph homomorphisms from a preorder tree to a GKM graph, modulo
-uncolored tree automorphisms. Neighbor lists must be sorted, nonempty for
-nontrivial trees, and contain no self loops. Every returned color vector is
+Enumerate graph homomorphisms from a normalized preorder tree to a GKM graph,
+modulo uncolored tree automorphisms. For the unrooted case, use depth sequences
+from `_FreeTreeIterator`; the rooted case uses `_rooted_level_sequences` with
+`fixed_root=true`. Arbitrary rootings need not satisfy the central-flip convention.
+Neighbor lists must be strictly increasing, nonempty for nontrivial trees,
+and contain no self loops. Input arrays are shared read-only; every returned color vector is
 owned by its consumer; successor state is kept separate.
 
 Identical sibling subtrees are ordered lexicographically. An isomorphism

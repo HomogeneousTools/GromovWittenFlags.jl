@@ -1,4 +1,13 @@
 """
+    _vertex_bound(beta)
+
+Maximum number of vertices in a positive-degree fixed tree: every edge uses
+at least one unit of the compact nonnegative curve class. Check machine-integer
+overflow before the caller allocates buffers or starts free-tree enumeration.
+"""
+_vertex_bound(beta) = foldl(Base.Checked.checked_add, beta; init=1)
+
+"""
     _TreeShape
 
 Read-only combinatorics of a preorder tree: edges, incidence, a parent-before-
@@ -87,6 +96,9 @@ Stream positive cover degrees satisfying `sum(d[e] * curve[roots[e]]) == beta`.
 The callback borrows one degree buffer. Suffix sums reserve at least one cover
 for each remaining edge, pruning impossible branches before recursion. The
 last edge is solved directly rather than trying every possible degree.
+`roots[e]` indexes `data.curve_classes`; `beta` has compact marked-node
+coordinates. The callback must treat its buffer as read-only and copy it
+before retaining it. The input arrays are never modified.
 """
 function _foreach_degree_assignment(f::F, data::_GWData, roots, beta) where {F}
   n = length(roots)
@@ -96,40 +108,56 @@ function _foreach_degree_assignment(f::F, data::_GWData, roots, beta) where {F}
     suffix[i, edge] = suffix[i, edge + 1] + data.curve_classes[roots[edge]][i]
   end
   remaining = copy(beta)
-  function visit(edge::Int)
-    if edge > n
-      all(iszero, remaining) && f(current)
-      return nothing
-    end
-    curve = data.curve_classes[roots[edge]]
-    maximum_degree = typemax(Int)
-    for i in eachindex(beta)
-      budget = remaining[i] - suffix[i, edge + 1]
-      budget < 0 && return nothing
-      curve[i] > 0 && (maximum_degree = min(maximum_degree, budget ÷ curve[i]))
-    end
-    maximum_degree == typemax(Int) && return nothing
-    if edge == n
-      maximum_degree > 0 || return nothing
-      all(remaining[i] == maximum_degree * curve[i] for i in eachindex(beta)) ||
-        return nothing
-      current[edge] = maximum_degree
-      f(current)
-      return nothing
-    end
-    for degree in 1:maximum_degree
-      current[edge] = degree
-      for i in eachindex(remaining)
-        remaining[i] -= degree * curve[i]
-      end
-      visit(edge + 1)
-      for i in eachindex(remaining)
-        remaining[i] += degree * curve[i]
-      end
-    end
-    nothing
+  _visit_degree_assignments!(f, data.curve_classes, roots, current, remaining, suffix, 1)
+  nothing
+end
+
+"""
+    _visit_degree_assignments!(f, curves, roots, current, remaining, suffix, edge)
+
+Visit the cover degrees starting at `edge`, overwriting `current` and temporarily
+subtracting assigned curve classes from `remaining`. On normal return the budget
+is restored; `current` remains scratch storage. `suffix[:, edge]` is the minimum
+class required by the still-unassigned edges. Other arguments are read-only.
+
+Passing state explicitly keeps this recursive worker concrete and avoids the
+boxed self-reference of a recursive local function in the enumeration loop.
+"""
+function _visit_degree_assignments!(f::F, curves, roots, current, remaining,
+  suffix, edge::Int) where {F}
+  if edge > length(roots)
+    all(iszero, remaining) && f(current)
+    return nothing
   end
-  visit(1)
+  curve = curves[roots[edge]]
+  maximum_degree = typemax(Int)
+  for i in eachindex(remaining)
+    budget = remaining[i] - suffix[i, edge + 1]
+    budget < 0 && return nothing
+    curve[i] > 0 && (maximum_degree = min(maximum_degree, budget ÷ curve[i]))
+  end
+  maximum_degree == typemax(Int) && return nothing
+  if edge == length(roots)
+    maximum_degree > 0 || return nothing
+    # Solve the final edge in every coordinate, including coordinates in
+    # which its class is zero. A one-coordinate bound alone is insufficient.
+    for i in eachindex(remaining)
+      remaining[i] == maximum_degree * curve[i] || return nothing
+    end
+    current[edge] = maximum_degree
+    f(current)
+    return nothing
+  end
+  for degree in 1:maximum_degree
+    current[edge] = degree
+    for i in eachindex(remaining)
+      remaining[i] -= degree * curve[i]
+    end
+    _visit_degree_assignments!(f, curves, roots, current, remaining, suffix, edge + 1)
+    for i in eachindex(remaining)
+      remaining[i] += degree * curve[i]
+    end
+  end
   nothing
 end
 

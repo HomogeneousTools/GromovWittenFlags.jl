@@ -12,9 +12,6 @@ function _curve_degree(data::_GWData, c, beta)
   degree
 end
 
-"""Maximum fixed-tree vertex count, checking machine-integer overflow before allocation."""
-_vertex_bound(beta) = foldl(Base.Checked.checked_add, beta; init=1)
-
 """Expected complex codimension, including the degree-zero classical pairing convention."""
 function _expected_degree(data::_GWData, beta, n::Int, dim::Int, c)
   if all(iszero, beta)
@@ -30,12 +27,20 @@ end
     expected_gromov_witten_degree(Z::ZeroLocus, beta, n)
 
 Return the required sum of Schubert codimensions for a genus-zero primary
-invariant in curve class `beta` with `n` insertions.  With `bundle=E`, compute
+invariant in curve class `beta` with `n` insertions. With `bundle=E`, compute
 the requirement for the smooth zero locus of the homogeneous bundle `E`,
 subject to the supported weight condition. For positive degree the result is
 `dim + c1⋅beta + n - 3`.
-At degree zero, fewer than three marks use the classical intersection
-convention; otherwise the expected degree is `dim + n - 3`.
+At degree zero, at most three marks use the classical intersection convention
+and return `dim`; otherwise the formal degree is `dim + n - 3`, although the
+corresponding primary invariants vanish. `n` must be nonnegative. Curve
+coordinates follow [`gromov_witten_invariant`](@ref).
+
+# Examples
+```jldoctest
+julia> expected_gromov_witten_degree(projective_space(2), [2], 5)
+10
+```
 """
 function expected_gromov_witten_degree(
   X::PartialFlagVariety, beta, n::Integer; bundle=nothing
@@ -52,7 +57,7 @@ end
     gromov_witten_invariant(Z::ZeroLocus, classes, beta)
 
 Compute an exact genus-zero primary Gromov--Witten invariant of the flag
-variety `X`.  `classes` are entries returned by [`schubert_classes`](@ref), and
+variety `X`. `classes` is a vector of elements returned by [`schubert_classes`](@ref), and
 `beta` is written either in marked-node order or as an ambient zero-padded
 vector. Passing a homogeneous `bundle` satisfying the supported weight
 condition computes the Euler-twisted invariant of its smooth zero locus.
@@ -62,6 +67,21 @@ of the defining section are assumptions. The result is a `Rational{BigInt}`.
 Dimension-mismatched invariants and degree-zero primary invariants with
 more than three marks vanish. With at most three marks, degree zero uses
 the classical intersection integral, including the two-point pairing.
+The input classes and curve coordinates are not modified. An empty insertion
+vector requests the unmarked invariant.
+
+# Examples
+```jldoctest
+julia> X = projective_space(2); pt = point_class(X);
+
+julia> gromov_witten_invariant(X, fill(pt, 5), [2])
+1//1
+
+julia> S = zero_locus(line_bundle(projective_space(3), 3));
+
+julia> gromov_witten_invariant(S, [], [1])
+27//1
+```
 """
 function gromov_witten_invariant(
   X::PartialFlagVariety, classes::AbstractVector, beta; bundle=nothing
@@ -80,6 +100,22 @@ function _gromov_witten_invariant(data::_GWData, classes, beta, bundle)
   # For more than three marks, primary insertions have no degree on M̄₀,ₙ.
   all(iszero, β) && length(classes) > 3 && return zero(_BigRational)
   _checked_localization(data, class_indices, β, weights)
+end
+
+"""Dispatch degree-zero integration or shared positive-degree graph evaluation with exact checks."""
+function _checked_localization(data::_GWData, classes, beta, weights)
+  _checked_torus_evaluations(data, weights) do evaluations
+    if all(iszero, beta)
+      return map(evaluation -> _degree_zero_invariant(evaluation, classes), evaluations)
+    end
+    foreach(evaluation -> _prepare_edges!(evaluation, beta), evaluations)
+    if length(classes) == 2
+      blocks = _positive_degree_pair_blocks(evaluations, classes, [(1, 2)], beta)
+      map(only, blocks)
+    else
+      _positive_degree_invariants(evaluations, classes, beta)
+    end
+  end
 end
 
 function expected_gromov_witten_degree(Z::ZeroLocus, beta, n::Integer)

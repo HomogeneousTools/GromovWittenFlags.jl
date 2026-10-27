@@ -54,20 +54,14 @@ function _complete_intersection_data(data::_GWData{DT,R}, E) where {DT,R}
 end
 
 """Evaluate a root or weight against a coroot using fundamental-weight coordinates."""
-function _root_coroot_pairing(root::RootSpaceElem, coroot::RootSpaceElem)
-  λ = coefficients(WeightLatticeElem(root))
-  sum(λ[i] * coefficients(coroot)[i] for i in eachindex(λ))
-end
+_root_coroot_pairing(root::RootSpaceElem, coroot::RootSpaceElem) =
+  _root_coroot_pairing(WeightLatticeElem(root), coroot)
 
 function _root_coroot_pairing(weight::WeightLatticeElem, coroot::RootSpaceElem)
   λ = coefficients(weight)
   sum(λ[i] * coefficients(coroot)[i] for i in eachindex(λ))
 end
 
-# Recover the complete multiset of weights of the Levi representation carried
-# by a bundle.  PartialFlagVarieties stores the highest weights in the
-# convention used by Borel--Weil--Bott; the actual torus weights of the bundle
-# fibre are their negatives, which is applied only when evaluating the twist.
 """
     _bundle_weights(E)
 

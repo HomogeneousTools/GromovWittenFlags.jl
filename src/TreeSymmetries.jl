@@ -41,8 +41,7 @@ factorial work. Stored permutations are shared read-only by graph callbacks.
 """
 function _tree_automorphisms(levels::Vector{Int}, edges::Vector{NTuple{2,Int}})
   key = Tuple(levels)
-  lock(_TREE_AUTOMORPHISM_LOCK)
-  try
+  lock(_TREE_AUTOMORPHISM_LOCK) do
     get!(_TREE_AUTOMORPHISM_CACHE, key) do
       n = length(levels)
       n > 8 && return nothing
@@ -65,8 +64,6 @@ function _tree_automorphisms(levels::Vector{Int}, edges::Vector{NTuple{2,Int}})
       end
       result
     end
-  finally
-    unlock(_TREE_AUTOMORPHISM_LOCK)
   end
 end
 
@@ -82,8 +79,8 @@ end
     _degree_orbit(degrees, automorphisms)
 
 Return the lexicographically least degree tuple and its stabilizer order.
-`automorphisms` must already preserve vertex colors and any distinguished
-root. The inverse edge permutation pulls each degree assignment back to the
+`automorphisms` is nonempty and must already preserve vertex colors and any
+distinguished root. The inverse edge permutation pulls each degree assignment back to the
 original edge order; a tuple key owns its values independently of the DFS buffer.
 """
 function _degree_orbit(degrees, automorphisms)
@@ -105,7 +102,7 @@ function _degree_orbit(degrees, automorphisms)
     preserves && (stabilizer += 1)
     better && (best = inverse)
   end
-  ntuple(edge -> degrees[best[edge]], length(degrees)), stabilizer
+  Tuple(degrees[edge] for edge in best), stabilizer
 end
 
 """Find the one or two centers of a nonempty tree by peeling leaves layer by layer."""
@@ -133,20 +130,25 @@ function _tree_centers(adjacency)
 end
 
 """
-    _tree_encoding(adjacency, degrees, colors, marks, vertex, parent, aut)
+    _tree_encoding(adjacency, degrees, colors, marks, vertex, parent)
 
-Canonical rooted-tree encoding with edge degrees, vertex colors, and labeled
-marks. Equal child encodings can be permuted freely; their multiplicity
-factorials multiply the exact automorphism order stored in `aut`.
+Return `(encoding, automorphism_order)` for the subtree rooted at `vertex`,
+excluding the branch through `parent` (zero at a root). The encoding records
+edge degrees, vertex colors, and ordered lists of labeled marks. Equal child
+encodings can be permuted freely, contributing their multiplicity factorials.
+Each `marks[v]` lists mark indices in increasing order.
+The order is a `BigInt`; inputs remain unchanged.
 """
-function _tree_encoding(adjacency, degrees, colors, marks, v::Int, parent::Int, aut)
-  children = Any[]
+function _tree_encoding(adjacency, degrees, colors, marks, v::Int, parent::Int)
+  # Subtree encodings have different tuple types at different depths. This
+  # heterogeneous storage is confined to the large-tree canonical fallback.
+  children = Tuple{Int,Tuple}[]
+  automorphisms = big(1)
   for (w, edge) in adjacency[v]
     w == parent && continue
-    push!(
-      children,
-      (degrees[edge], _tree_encoding(adjacency, degrees, colors, marks, w, v, aut)),
-    )
+    encoding, child_automorphisms = _tree_encoding(adjacency, degrees, colors, marks, w, v)
+    push!(children, (degrees[edge], encoding))
+    automorphisms *= child_automorphisms
   end
   sort!(children)
   i = 1
@@ -155,10 +157,10 @@ function _tree_encoding(adjacency, degrees, colors, marks, v::Int, parent::Int, 
     while j <= length(children) && children[j] == children[i]
       j += 1
     end
-    aut[] *= factorial(big(j - i))
+    automorphisms *= factorial(big(j - i))
     i = j
   end
-  (colors[v], Tuple(marks[v]), Tuple(children))
+  (colors[v], Tuple(marks[v]), Tuple(children)), automorphisms
 end
 
 """
@@ -171,16 +173,18 @@ exact in the fallback used beyond the small-tree enumeration cutoff.
 """
 function _canonical_tree(adjacency, degrees, colors, marks)
   centers = _tree_centers(adjacency)
-  aut = Ref(big(1))
   if length(centers) == 1
-    root = _tree_encoding(adjacency, degrees, colors, marks, only(centers), 0, aut)
-    return (0, root), aut[]
+    root, automorphisms = _tree_encoding(
+      adjacency, degrees, colors, marks, only(centers), 0
+    )
+    return (0, root), automorphisms
   end
   u, v = centers
-  left = _tree_encoding(adjacency, degrees, colors, marks, u, v, aut)
-  right = _tree_encoding(adjacency, degrees, colors, marks, v, u, aut)
+  left, left_automorphisms = _tree_encoding(adjacency, degrees, colors, marks, u, v)
+  right, right_automorphisms = _tree_encoding(adjacency, degrees, colors, marks, v, u)
   edge = only(i for (w, i) in adjacency[u] if w == v)
-  left == right && (aut[] *= 2)
+  automorphisms = left_automorphisms * right_automorphisms
+  left == right && (automorphisms *= 2)
   a, b = minmax(left, right)
-  (1, degrees[edge], a, b), aut[]
+  (1, degrees[edge], a, b), automorphisms
 end

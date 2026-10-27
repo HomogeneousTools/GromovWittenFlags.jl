@@ -156,8 +156,16 @@ _owned_schubert(data::_GWData, w::WeylGroupElem) = data.weyl_group(word(w); norm
     schubert_classes(X::PartialFlagVariety)
 
 Return the Schubert basis of `X`, represented by the minimal-length elements
-of the Weyl-group quotient.  The list is ordered by length and starts with the
-identity class.
+of the right quotient `W/W_P`. Coxeter length is complex codimension. The list
+is ordered by length and starts with the identity class; the order within a
+codimension follows Semisimple's coset enumeration.
+The returned vector and every reduced word have their own storage.
+
+# Examples
+```jldoctest
+julia> length.(schubert_classes(Gr(2, 4))) == [0, 1, 2, 2, 3, 4]
+true
+```
 """
 function schubert_classes(X::PartialFlagVariety)
   data = _gw_data(X)
@@ -173,8 +181,22 @@ end
 """
     schubert_class(X::PartialFlagVariety, word)
 
-Return the Schubert class indexed by `word`, projected to the minimal
-representative of the corresponding Weyl-group coset.
+Return the minimal representative of the right Weyl-group coset indexed by
+`word`, as an owned `WeylGroupElem`. Supply a tuple or vector of integer
+simple-reflection indices in `1:rank(dynkin_type(X))`. The word need not be
+reduced. Its projection can have smaller length when parabolic reflections
+are removed. Invalid reflection indices raise `ArgumentError`.
+
+# Examples
+```jldoctest
+julia> X = Gr(2, 4);
+
+julia> length(schubert_class(X, (2,)))
+1
+
+julia> schubert_class(X, (2, 2)) == first(schubert_classes(X))
+true
+```
 """
 function schubert_class(X::PartialFlagVariety, word::AbstractVector{<:Integer})
   data = _gw_data(X)
@@ -191,14 +213,30 @@ schubert_class(X::PartialFlagVariety, word::Tuple{Vararg{Integer}}) =
 """
     point_class(X::PartialFlagVariety)
 
-Return the top Schubert class of `X`.
+Return an owned representative of the top Schubert class of the ambient flag
+variety `X`. Its Coxeter length equals `dimension(X)`.
+For zero-locus computations the insertions are ambient classes; restricting
+this ambient point class need not give a point class on the zero locus.
+
+# Examples
+```jldoctest
+julia> length(point_class(projective_space(2)))
+2
+```
 """
 function point_class(X::PartialFlagVariety)
   data = _gw_data(X)
   _owned_schubert(data, last(data.representatives))
 end
 
-"""Validate and copy a compact or ambient curve class into marked-node order."""
+"""
+    _normalize_beta(data, beta)
+
+Return a fresh `Vector{Int}` in `marked_nodes(data.variety)` order. Accept a
+tuple or vector of nonnegative integer coordinates, either compact or padded
+to the ambient rank with zeros at unmarked nodes. All entries must fit in
+`Int`; malformed lengths, values, and unmarked coordinates raise `ArgumentError`.
+"""
 function _normalize_beta(data::_GWData, beta)
   beta isa Union{AbstractVector,Tuple} ||
     throw(ArgumentError("a curve class must be a vector or tuple of integers"))
@@ -228,6 +266,5 @@ function _normalize_beta(data::_GWData, beta)
       ),
     )
   end
-  all(>=(0), compact) || throw(ArgumentError("curve-class coordinates must be nonnegative"))
   compact
 end

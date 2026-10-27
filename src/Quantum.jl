@@ -1,7 +1,9 @@
 """
     _classical_matrices(data, dim, chern_coordinates, weights)
 
-Compute the full ambient metric and first-Chern three-point pairing together.
+Return `(metric, chern_pairing)`, both full ambient symmetric matrices with
+Schubert-class indices on both axes. `dim`, `chern_coordinates`, and `weights`
+describe the validated target, rather than necessarily its ambient variety.
 At each of two torus points, Schubert restrictions and the Euler density are
 computed once and reused for every entry. Codimension gates exclude classes
 that cannot contribute on the target. The returned matrices are symmetric.
@@ -59,19 +61,31 @@ are ordered by total coordinate sum, then lexicographically, with zero first.
 function _compact_beta_vectors(coefficients::Vector{Int}, bound::Int)
   result = Vector{Vector{Int}}()
   current = zeros(Int, length(coefficients))
-  function visit(i::Int, remaining::Int)
-    if i > length(coefficients)
-      push!(result, copy(current))
-      return nothing
-    end
-    for value in 0:(remaining ÷ coefficients[i])
-      current[i] = value
-      visit(i + 1, remaining - value * coefficients[i])
-    end
-    nothing
-  end
-  visit(1, bound)
+  _append_curve_vectors!(result, current, coefficients, 1, bound)
   sort!(result; by=beta -> (sum(beta), beta))
+end
+
+"""
+    _append_curve_vectors!(result, current, coefficients, position, remaining)
+
+Append owned curve vectors with weighted degree at most the remaining budget.
+The prefix before `position` is fixed; the worker overwrites the remaining
+coordinates of `current`. Coefficients must be positive. Copying only complete
+vectors preserves result ownership without allocating at each search branch.
+"""
+function _append_curve_vectors!(
+  result, current, coefficients, position::Int, remaining::Int
+)
+  if position > length(coefficients)
+    push!(result, copy(current))
+    return nothing
+  end
+  for value in 0:(remaining ÷ coefficients[position])
+    current[position] = value
+    _append_curve_vectors!(result, current, coefficients, position + 1,
+      remaining - value * coefficients[position])
+  end
+  nothing
 end
 
 """Enumerate ambient Fano degrees from validated target data without expanding bundle weights again."""
@@ -96,13 +110,31 @@ end
     fano_curve_classes(X; bundle=nothing)
     fano_curve_classes(Z::ZeroLocus)
 
-Return `(index, betas)` for the flag variety or homogeneous zero locus.
+Return the tuple `(index::Int, betas::Vector{Vector{Int}})` for the flag variety
+or homogeneous zero locus.
 For strictly positive first Chern coordinates, enumerate every nonnegative
 ambient curve class with first Chern degree at most `dimension + 1`, including
-zero. The index is the gcd of the ambient first Chern coordinates.
-If all coordinates vanish, return only zero. Mixed zero and positive, or
+zero. Each owned curve vector uses compact `marked_nodes` order. Results are
+ordered by total coordinate sum, then lexicographically. The index is the gcd
+of the ambient first Chern coordinates, rather than their vector or necessarily
+the intrinsic Fano index of a zero locus.
+If all coordinates vanish, return `(0, [zero_class])`. Mixed zero and positive, or
 negative, coordinates require explicit `betas` in
 [`small_quantum_multiplication`](@ref).
+
+# Examples
+```jldoctest
+julia> fano_curve_classes(projective_space(2))
+(3, [[0], [1]])
+
+julia> index, betas = fano_curve_classes(product(projective_space(1), projective_space(2)));
+
+julia> index
+1
+
+julia> [1, 0] in betas && [0, 1] in betas
+true
+```
 """
 function fano_curve_classes(X::PartialFlagVariety; bundle=nothing)
   data = _gw_data(X)
@@ -115,10 +147,17 @@ end
     small_quantum_multiplication(Z::ZeroLocus; betas=nothing)
 
 Compute the flag-ambient projection of small quantum multiplication by the
-target's first Chern class. Return `(matrix, grading, basis, metric)`.
-Matrix entries are exact [`NovikovPolynomial`](@ref)s; [`evaluate`](@ref)
-specializes their variables. Columns are input classes and rows are output
-coefficients. All returned basis words and polynomials are owned by the caller.
+target's first Chern class. Return a named tuple with these fields:
+
+- `matrix`: a square matrix of exact [`NovikovPolynomial`](@ref)s. Columns are
+  input classes and rows are output coefficients in `basis` order.
+- `grading`: a diagonal matrix with entries `codimension - dimension/2`.
+- `basis`: ambient Schubert representatives whose restrictions form the chosen basis.
+- `metric`: their exact intersection pairing on the target.
+
+All returned arrays, basis words, and polynomial dictionaries are owned by
+the caller. [`evaluate`](@ref) specializes Novikov variables; broadcasting
+`evaluate.(result.matrix)` sets every variable to one.
 
 For a zero locus, ambient Schubert restrictions are reduced modulo the radical
 of the intersection pairing. The ambient subspace need not be preserved by the
@@ -129,6 +168,17 @@ Explicit `betas` define a finite truncation: include zero for the classical
 term; duplicates are ignored. Otherwise [`fano_curve_classes`](@ref) supplies
 the finite list. The defining bundle must satisfy the supported Euler-twist
 weight condition described in the manual.
+
+# Examples
+```jldoctest
+julia> result = small_quantum_multiplication(projective_space(1));
+
+julia> evaluate.(result.matrix) == [0 2; 2 0]
+true
+
+julia> evaluate(result.matrix[1, 2], (3,))
+6//1
+```
 """
 function small_quantum_multiplication(X::PartialFlagVariety; bundle=nothing, betas=nothing)
   _small_quantum_multiplication(_gw_data(X), bundle, betas)

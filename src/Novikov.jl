@@ -14,6 +14,19 @@ exact scalar multiplication. Different variable counts belong to different
 polynomial rings. Treat the stored `terms` dictionary as read-only; construct
 a new polynomial to normalize an edited dictionary. Matrix entries returned
 by [`small_quantum_multiplication`](@ref) have independent dictionaries.
+
+# Examples
+```jldoctest
+julia> P = NovikovPolynomial{2};
+
+julia> p = P(Dict((1, 0) => 2, (0, 1) => -1));
+
+julia> evaluate(p, (2, 3))
+1//1
+
+julia> iszero(p - p)
+true
+```
 """
 struct NovikovPolynomial{R}
   terms::Dict{NTuple{R,Int},_BigRational}
@@ -185,6 +198,19 @@ every variable to one. Integers and rationals retain their exact values;
 finite floating-point inputs are converted to their exact binary rational
 values. Vector iteration order determines variable order, including for
 vectors with nonstandard axes. The result is a `Rational{BigInt}`.
+The values must be finite and their count must match the polynomial's number
+of variables; malformed inputs raise `ArgumentError`.
+
+# Examples
+```jldoctest
+julia> p = NovikovPolynomial{1}(Dict((2,) => 3));
+
+julia> evaluate(p)
+3//1
+
+julia> evaluate(p, (1//2,))
+3//4
+```
 """
 evaluate(p::NovikovPolynomial) = sum(values(p.terms); init=zero(_BigRational))
 
