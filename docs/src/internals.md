@@ -105,7 +105,13 @@ Each yielded depth sequence has its own storage. A cached tree shape records
 edges, incidence, and a parent-before-child traversal.
 
 Canonical colorings enumerate graph homomorphisms from the tree to the
-moment graph modulo uncolored tree automorphisms. Cover degrees are then
+moment graph modulo uncolored tree automorphisms. The iterator keeps its
+successor state separate from the owned vectors it yields. When a color
+advances, complete subtrees in the changed suffix reset in place, using cached
+parent indices; no subtree level slices or temporary color vectors are needed.
+Rooted enumeration fixes vertex one's color and allows only root-preserving
+symmetries. Tests compare both rooted and unrooted orbits with brute force.
+Cover degrees are then
 enumerated modulo the subgroup preserving the colors. For small shapes,
 permutation groups give degree-orbit representatives and stabilizer orders.
 For larger shapes, recursive canonical encodings replace explicit groups.

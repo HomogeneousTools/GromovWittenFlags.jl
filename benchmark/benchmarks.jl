@@ -51,6 +51,16 @@ function curve_search_workload(; repetitions=10_000)
   count
 end
 
+"""Enumerate coloring orbits, consuming each owned vector without retaining the outputs."""
+function coloring_search_workload(levels, neighbors)
+  count = checksum = 0
+  for tree in levels, colors in GromovWittenFlags._ColoringIterator(tree, neighbors)
+    count += 1
+    checksum += sum(colors)
+  end
+  (; count, checksum)
+end
+
 """Run exact invariant, quantum-matrix, and enumeration workloads in a fixed order."""
 function benchmarks()
   samples = parse(Int, get(ENV, "GWFLAGS_BENCH_SAMPLES", "3"))
@@ -63,6 +73,9 @@ function benchmarks()
   data = GromovWittenFlags._gw_data(grassmannian)
   measure("degree search", () -> degree_search_workload(data); samples)
   measure("curve search", curve_search_workload; samples)
+  levels = [tree for n in 2:8 for tree in GromovWittenFlags._FreeTreeIterator(n)]
+  neighbors = [[j for j in 1:4 if j != i] for i in 1:4]
+  measure("coloring search", () -> coloring_search_workload(levels, neighbors); samples)
   E =
     exterior_power(dual(universal_subbundle(grassmannian)), 2) +
     exterior_power(universal_quotient_bundle(grassmannian), 3) +

@@ -25,6 +25,16 @@ its warm reference; those comparisons are outside timing. The `degree search`
 and `curve search` workloads isolate recursive enumeration from localization,
 using 20,000 and 10,000 repetitions respectively. They help identify Julia
 closure and allocation regressions without relying on a complete quantum matrix.
+The `coloring search` workload enumerates all free trees with two through eight
+vertices colored by the complete four-vertex graph, consuming 94,070 owned
+outputs and a color checksum of 1,832,000. Constructor work and output copies
+are included; the depth sequences and neighbor lists are prepared outside timing.
+
+The coloring follow-up was measured against `28f53dd` on the same host and
+dependency versions, with bounds checking enabled and five warmed samples.
+Resetting subtree colors in place reduced median allocation from 22,030,320
+to 14,879,600 bytes (32.5%) and median time from 0.005235 to 0.004194 seconds.
+This isolates enumeration; it does not measure the speed of a complete invariant.
 
 ## Review comparison
 

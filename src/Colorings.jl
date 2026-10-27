@@ -16,6 +16,8 @@ owned by its consumer; successor state is kept separate.
 Identical sibling subtrees are ordered lexicographically. An isomorphism
 exchanging the two central halves imposes a further root-color ordering.
 `fixed_root=true` disables this central flip and preserves vertex one's mark.
+Use the default `root_color=1` for unrooted enumeration; a fixed root may have
+any color in `eachindex(neighbors)`.
 The reverse traversal and subtree bounds guide which suffix can change next.
 """
 struct _ColoringIterator
@@ -100,14 +102,20 @@ function _ColoringIterator(
   )
 end
 
-"""Lexicographically first valid coloring of a rooted subtree with prescribed root color."""
-function _first_coloring(
-  levels::Vector{Int}, neighbors::Vector{Vector{Int}}, root_color::Int=1
-)
-  colors = fill(root_color, length(levels))
-  for vertex in 2:length(levels)
-    parent = findlast(i -> levels[i] == levels[vertex] - 1, 1:(vertex - 1))
-    colors[vertex] = first(neighbors[colors[parent]])
+"""
+    _reset_coloring!(colors, iterator, first_vertex, last_vertex, root_color)
+
+Overwrite one complete preorder subtree with its lexicographically first valid
+coloring and return `colors`. The inclusive bounds must describe a subtree of
+`iterator`; vertices outside it are untouched. Its root receives `root_color`,
+and each descendant receives its parent's smallest neighbor. Precomputed parent
+indices avoid copying level slices and searching for parents on every successor.
+"""
+function _reset_coloring!(colors, iterator::_ColoringIterator,
+  first_vertex::Int, last_vertex::Int, root_color::Int)
+  colors[first_vertex] = root_color
+  for vertex in (first_vertex + 1):last_vertex
+    colors[vertex] = first(iterator.neighbors[colors[iterator.parents[vertex]]])
   end
   colors
 end
@@ -117,9 +125,8 @@ Base.IteratorSize(::Type{_ColoringIterator}) = Base.SizeUnknown()
 
 function Base.iterate(iterator::_ColoringIterator, state=nothing)
   if state === nothing
-    colors = _first_coloring(
-      iterator.levels, iterator.neighbors, iterator.root_color
-    )
+    colors = Vector{Int}(undef, length(iterator.levels))
+    _reset_coloring!(colors, iterator, 1, length(colors), iterator.root_color)
     return copy(colors), colors
   end
   colors = state
@@ -169,6 +176,9 @@ function Base.iterate(iterator::_ColoringIterator, state=nothing)
     colors[colorable] = available[findfirst(>(colors[colorable]), available)]
   end
 
+  # Advancing a color invalidates the remaining preorder suffix. Its complete
+  # subtree blocks can each reset to their least coloring using already valid
+  # parent colors, while the prefix through `colorable` stays unchanged.
   vertex = colorable + 1
   while vertex <= length(iterator.levels)
     root_color = if iterator.has_central_involution && vertex == 2
@@ -178,9 +188,7 @@ function Base.iterate(iterator::_ColoringIterator, state=nothing)
       first(iterator.neighbors[colors[iterator.parents[vertex]]])
     end
     subtree_end = iterator.subtree_ends[vertex]
-    colors[vertex:subtree_end] = _first_coloring(
-      iterator.levels[vertex:subtree_end], iterator.neighbors, root_color
-    )
+    _reset_coloring!(colors, iterator, vertex, subtree_end, root_color)
     vertex = subtree_end + 1
   end
   copy(colors), colors

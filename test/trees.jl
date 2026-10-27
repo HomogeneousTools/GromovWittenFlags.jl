@@ -72,5 +72,45 @@
     ]
     @test Set(canonical) == brute
     @test length(unique(canonical)) == length(canonical)
+    @test length(unique(objectid.(colorings))) == length(colorings)
   end
+end
+
+@testset "Rooted coloring orbits and owned outputs" begin
+  graphs = ([[2, 3], [1, 3], [1, 2]], [[2], [1, 3], [2, 4], [3]])
+  for neighbors in graphs, n in 1:5, unrooted in GWF._FreeTreeIterator(n),
+    levels in GWF._rooted_level_sequences(GWF._tree_shape(unrooted))
+
+    edges = GWF._tree_edges(levels)
+    adjacency = GWF._tree_adjacency(n, edges)
+    degrees = ones(Int, n - 1)
+    # Distinguish vertex one so canonicalization allows only root-preserving
+    # isomorphisms, independently of the iterator's sibling ordering.
+    marks = [i == 1 ? [1] : Int[] for i in 1:n]
+    for root_color in eachindex(neighbors)
+      brute = Set{Any}()
+      for assignment in Iterators.product(ntuple(_ -> eachindex(neighbors), n)...)
+        first(assignment) == root_color || continue
+        all(assignment[v] in neighbors[assignment[u]] for (u, v) in edges) || continue
+        push!(brute,
+          first(GWF._canonical_tree(adjacency, degrees, collect(assignment), marks)))
+      end
+      iterator = GWF._ColoringIterator(levels, neighbors; fixed_root=true, root_color)
+      colorings = collect(iterator)
+      canonical = [
+        first(GWF._canonical_tree(adjacency, degrees, colors, marks))
+        for colors in colorings
+      ]
+      @test Set(canonical) == brute
+      @test length(unique(canonical)) == length(canonical)
+    end
+  end
+
+  iterator = GWF._ColoringIterator([1, 2, 2], first(graphs))
+  expected = collect(iterator)
+  colors, state = iterate(iterator)
+  @test colors !== state
+  fill!(colors, 0)
+  successor, _ = iterate(iterator, state)
+  @test successor == expected[2]
 end

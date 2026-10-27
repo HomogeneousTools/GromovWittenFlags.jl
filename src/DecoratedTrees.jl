@@ -161,7 +161,15 @@ function _visit_degree_assignments!(f::F, curves, roots, current, remaining,
   nothing
 end
 
-"""Fill edge roots from a graph coloring and return its minimal (all covers degree one) class."""
+"""
+    _color_tree!(minimum_class, tree, data, colors)
+
+Replace `tree.colors` with a borrowed reference to `colors`, fill its local
+edge-root indices, and overwrite `minimum_class` with the compact curve class
+when every cover degree is one. The caller owns the buffers; the coloring
+must remain valid and read-only while the tree is consumed. Structural arrays
+and cover degrees are untouched. Return `nothing`.
+"""
 function _color_tree!(minimum_class, tree::_DecoratedTree, data::_GWData, colors)
   tree.colors = colors
   fill!(minimum_class, 0)
@@ -245,7 +253,14 @@ function _foreach_unmarked_decorated_tree(f::F, data::_GWData, levels,
   nothing
 end
 
-"""Encode an uncolored tree rooted at a vertex, sorting child shapes into a canonical preorder."""
+"""
+    _rooted_encoding(adjacency, vertex, parent)
+
+Return `(key, levels)` for an uncolored subtree rooted at `vertex`, excluding
+the branch through `parent` (zero at the root). Recursively sorted child keys
+classify rooted isomorphisms. `levels` is a freshly allocated normalized
+preorder depth sequence beginning with one; the adjacency lists are read-only.
+"""
 function _rooted_encoding(adjacency, vertex::Int, parent::Int)
   children = [
     _rooted_encoding(adjacency, child, vertex)
@@ -260,7 +275,14 @@ function _rooted_encoding(adjacency, vertex::Int, parent::Int)
   key, levels
 end
 
-"""Cache one rooted depth sequence for each vertex orbit of an uncolored free tree."""
+"""
+    _rooted_level_sequences(shape)
+
+Return the shared sorted depth sequences obtained by rooting `shape` at one
+vertex in each uncolored automorphism orbit. Equal rooted encodings identify
+equivalent vertices. Cache insertion uses the structural tree lock; the
+returned vector and its depth sequences must be treated as read-only.
+"""
 function _rooted_level_sequences(shape::_TreeShape)
   lock(_TREE_AUTOMORPHISM_LOCK) do
     get!(_ROOTED_LEVEL_CACHE, Tuple(shape.levels)) do
@@ -281,6 +303,9 @@ Stream rooted decorated-tree orbits whose distinguished vertex has the given
 fixed-point color. Each uncolored vertex orbit supplies one rooted shape;
 color and degree stabilizers must preserve the root mark. The distinguished
 vertex is always vertex one in the normalized preorder.
+The callback borrows the same workspace arrays as the unmarked enumerator;
+copy retained data, and do not mutate structural arrays or the current colors.
+Return `nothing`; callback exceptions propagate on the calling task.
 """
 function _foreach_rooted_decorated_tree(f::F, data::_GWData, levels,
   beta::Vector{Int}, root_color::Int) where {F}
