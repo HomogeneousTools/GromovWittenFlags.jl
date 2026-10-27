@@ -1,0 +1,6 @@
+*Manifest.toml
+LocalPreferences.toml
+docs/build/
+*.cov
+*.mem
+lcov.info

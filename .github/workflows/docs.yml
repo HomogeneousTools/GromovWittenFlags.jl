@@ -1,0 +1,27 @@
+name: docs
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5.0.1
+      - uses: julia-actions/setup-julia@v3.0.1
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Install documentation dependencies
+        run: julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+      - name: Build manual and run doctests
+        run: julia --project=docs docs/make.jl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/build

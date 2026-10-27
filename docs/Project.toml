@@ -1,0 +1,16 @@
+[compat]
+Documenter = "1"
+GromovWittenFlags = "0.1"
+PartialFlagVarieties = "0.4"
+julia = "1.11"
+
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+GromovWittenFlags = "75140638-72e8-41f4-b57a-a4f42873b3ff"
+PartialFlagVarieties = "965b632c-8f0e-44b9-bcdc-fceb5db1f8c7"
+
+[extras]
+Semisimple = "c99f5fee-6cdb-4bf1-806f-d7690e6ee6f7"
+
+[sources.GromovWittenFlags]
+path = ".."
