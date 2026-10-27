@@ -17,7 +17,8 @@ const QQ = Rational{BigInt}
       value = getfield(GWF, name)
       owned = (value isa Function || value isa Type) && parentmodule(value) === GWF
       (owned || isconst(GWF, name)) || continue
-      Base.Docs.doc(Base.Docs.Binding(GWF, name)) === nothing && push!(missing, name)
+      # `doc` renders REPL help; `hasdoc` checks metadata without loading REPL.
+      Base.Docs.hasdoc(GWF, name) || push!(missing, name)
     end
     @test isempty(missing)
   end
