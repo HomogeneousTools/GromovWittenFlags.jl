@@ -5,6 +5,15 @@ partial flag varieties and Euler-twisted invariants of smooth homogeneous
 zero loci. It depends on PartialFlagVarieties.jl for the geometry and on
 Semisimple.jl for root systems and Weyl groups.
 
+This is a semi-automated Julia port of
+[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions), the
+Python/SageMath software accompanying
+[*On the atomic decomposition of complete intersection in flag varieties*](https://arxiv.org/abs/2609.21914v2)
+by Boris Alexeev, Leonardo F. Cavenaghi, Giovane Galindo, Bogdan Georgiev,
+Ludmil Katzarkov, and Pedro Antonio Muniz Martins.
+The Julia port was developed with language-model assistance and subsequently
+restructured, reviewed, tested, and optimized for Julia.
+
 All invariants are exact rational numbers. Small quantum multiplication is
 returned as a matrix of sparse [`NovikovPolynomial`](@ref)s.
 

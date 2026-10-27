@@ -1,6 +1,22 @@
 # Third-party notices
 
-The constant-time free-tree iterator and canonical GKM-graph coloring iterator
+## gwflags
+
+GromovWittenFlags.jl is a semi-automated Julia port of the Python/SageMath
+[gwflags software](https://github.com/leonardofcavenaghi/atomicdecompositions).
+The upstream copyright notice is:
+
+> Copyright (c) 2026 Leonardo Cavenaghi
+
+The upstream MIT license, including its copyright and permission notice, is
+reproduced unchanged in [licenses/gwflags-LICENSE](licenses/gwflags-LICENSE),
+from [upstream revision affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24](https://github.com/leonardofcavenaghi/atomicdecompositions/blob/affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24/LICENSE).
+The authors of the accompanying mathematical work and the translation history
+are credited in [README.md](README.md) and [PROVENANCE.md](PROVENANCE.md).
+
+## GKMtools.jl
+
+The free-tree iterator and canonical GKM-graph coloring iterator
 in `src/FreeTrees.jl` and `src/Colorings.jl` are adapted from `GKMtools.jl`, copyright (c) 2025
 Daniel Holmes and Giosuè Muratore, and are used under the MIT License:
 

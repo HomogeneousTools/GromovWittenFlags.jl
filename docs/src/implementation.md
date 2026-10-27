@@ -33,6 +33,9 @@ by default. `GWFLAGS_EXTENDED_TESTS=true` adds the full degree-five Küchle
 c5 and b8 fixtures. These are regression data; they complement the independent
 small enumerative checks.
 
-The original package license and GKMtools MIT notices are retained in the
-repository. `PROVENANCE.md` records the source commit, exact-arithmetic patch,
-and snapshot checksum. Historical reproducibility snapshots are preserved.
+The upstream gwflags copyright and permission notice and the GKMtools MIT
+notice are retained alongside this package's MIT license. `THIRD_PARTY_NOTICES.md`
+identifies the adapted components, and `licenses/gwflags-LICENSE` preserves the
+upstream license unchanged. `PROVENANCE.md` records the original authors,
+translation history, Julia source commit, exact-arithmetic patch, and snapshot
+checksum. Historical reproducibility snapshots are preserved.

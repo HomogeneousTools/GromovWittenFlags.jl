@@ -1,5 +1,30 @@
 # Source provenance
 
+## Upstream gwflags
+
+GromovWittenFlags.jl is a semi-automated Julia port of
+[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions), the
+Python/SageMath implementation accompanying *On the atomic decomposition of
+complete intersection in flag varieties* by Boris Alexeev, Leonardo F. Cavenaghi,
+Giovane Galindo, Bogdan Georgiev, Ludmil Katzarkov, and Pedro Antonio Muniz Martins.
+The Julia translation and subsequent restructuring, review, tests, and
+optimizations were developed with language-model assistance.
+
+The upstream [project credits](https://github.com/leonardofcavenaghi/atomicdecompositions/blob/affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24/docs/about.md)
+identify Ludmil Katzarkov and Maxim Kontsevich as project leaders and list
+Alexeev, Cavenaghi, Galindo, Georgiev, and Martins as contributors.
+Its MIT copyright notice names Leonardo Cavenaghi.
+The [upstream license](https://github.com/leonardofcavenaghi/atomicdecompositions/blob/affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24/LICENSE)
+was checked at commit `affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24` and is preserved
+unchanged in [licenses/gwflags-LICENSE](licenses/gwflags-LICENSE).
+The upstream file ends mid-sentence in its warranty disclaimer; the archived
+copy intentionally preserves that text exactly.
+This revision records the license check, not the Python revision used for the
+initial translation. The package retains its own MIT license and the separate
+GKMtools notice in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Julia extraction and development
+
 Extracted from the Julia implementation on
 `HomogeneousTools/PartialFlagVarieties.jl`, branch
 `feat/atomic-decomposition`, commit

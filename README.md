@@ -3,6 +3,15 @@
 Exact genus-zero Gromov–Witten invariants of partial flag varieties and smooth
 zero loci of supported homogeneous bundles, using root-theoretic localization.
 
+This is a semi-automated Julia port of
+[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions), the
+Python/SageMath software accompanying
+[*On the atomic decomposition of complete intersection in flag varieties*](https://arxiv.org/abs/2609.21914v2)
+by Boris Alexeev, Leonardo F. Cavenaghi, Giovane Galindo, Bogdan Georgiev,
+Ludmil Katzarkov, and Pedro Antonio Muniz Martins.
+The Julia port was developed with language-model assistance and subsequently
+restructured, reviewed, tested, and optimized for Julia.
+
 Part of [HomogeneousTools](https://homogeneous.tools), built on
 [PartialFlagVarieties.jl](https://github.com/HomogeneousTools/PartialFlagVarieties.jl)
 and [Semisimple.jl](https://github.com/HomogeneousTools/Semisimple.jl).
@@ -95,3 +104,5 @@ See [REVIEW.md](REVIEW.md) for the correctness fixes and validation evidence.
 ## License
 
 MIT; see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The upstream gwflags copyright and permission notice is preserved in
+[licenses/gwflags-LICENSE](licenses/gwflags-LICENSE).
