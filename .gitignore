@@ -4,3 +4,4 @@ docs/build/
 *.cov
 *.mem
 lcov.info
+benchmark/gkmtools/results-local.toml
