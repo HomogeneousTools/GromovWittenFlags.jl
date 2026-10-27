@@ -181,9 +181,11 @@ pruning. Thus skipping a zero insertion contribution cannot hide an edge pole.
 Vertex factors are evaluated before pruning their mark sums.
 
 Two deterministic nonsingular torus specializations must agree exactly.
-An explicit pole retries the whole block at the next pair, for at most eight
-pairs. Disagreement is an error and never retries. Domain errors and unrelated
-programming exceptions propagate immediately. Agreement checks consistency
+The denominator and finiteness guards signal an explicit pole with the private
+[`GromovWittenFlags._LocalizationPole`](@ref) exception. Only this signal retries
+the whole block at the next pair, for at most eight pairs. Ordinary `DivideError`s
+propagate immediately, just as domain errors and other programming exceptions do.
+Disagreement is an error and never retries. Agreement checks consistency
 of the implementation; it is not a proof of the localization formula.
 
 Graph contributions use [`GromovWittenFlags._ExactSum`](@ref), a streaming

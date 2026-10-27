@@ -27,6 +27,19 @@ struct _GWEvaluation{D,T}
 end
 
 """
+    _LocalizationPole()
+
+Signal a singular exact torus specialization to the retry boundary.
+Only explicit zero-denominator and nonfinite-result guards create this private
+exception. Ordinary arithmetic exceptions must escape: a `DivideError` from
+an unrelated computation is not evidence that choosing another torus point helps.
+"""
+struct _LocalizationPole <: Exception end
+
+Base.showerror(io::IO, ::_LocalizationPole) =
+  print(io, "singular exact torus specialization")
+
+"""
     _divide_or_pole(numerator, denominator)
 
 Divide exact scalars, treating a zero denominator as a localization pole.
@@ -34,7 +47,7 @@ Julia rational arithmetic permits `1//0`; an explicit check is therefore
 necessary before division, rather than relying on a thrown arithmetic error.
 """
 function _divide_or_pole(numerator, denominator)
-  iszero(denominator) && throw(DivideError())
+  iszero(denominator) && throw(_LocalizationPole())
   numerator / denominator
 end
 
@@ -74,7 +87,7 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
     prod((-values[color, root] for root in data.nonparabolic_indices); init=one(T))
     for color in eachindex(data.representatives)
   ]
-  any(iszero, tangent_euler) && throw(DivideError())
+  any(iszero, tangent_euler) && throw(_LocalizationPole())
 
   n_weights = weights === nothing ? 0 : length(weights)
   fiber_values = Matrix{T}(undef, length(tangent_euler), n_weights)
@@ -179,7 +192,7 @@ The root–coroot pairing in the edge formula is cached before specialization.
 `color` indexes fixed points, `root` indexes `data.nonparabolic_indices`, and
 `degree` is a positive covering multiplicity, not an ambient curve vector.
 The value is memoized in this evaluation; a zero moving denominator raises
-`DivideError` so the caller can retry the entire torus specialization.
+`_LocalizationPole` so the caller can retry the entire torus specialization.
 """
 function _edge_factor(evaluation::_GWEvaluation{D,T}, color::Int,
   root::Int, degree::Int) where {D,T}
@@ -419,9 +432,10 @@ _all_finite(values) = all(_all_finite, values)
     _checked_torus_evaluations(f, data, weights)
 
 Run `f` on two target-bound exact evaluations and require equal finite results.
-Only explicit localization poles (`DivideError`) trigger a retry; unrelated
-domain and programming errors propagate. At most eight deterministic pairs
-are attempted. A disagreement is a correctness failure, never a retry.
+Only explicit localization poles (`_LocalizationPole`) trigger a retry;
+ordinary arithmetic, domain, and programming errors propagate. At most eight
+deterministic pairs are attempted. A disagreement is a correctness failure,
+never a retry.
 """
 function _checked_torus_evaluations(f::F, data::_GWData, weights) where {F}
   for seed in 0:2:14
@@ -430,12 +444,12 @@ function _checked_torus_evaluations(f::F, data::_GWData, weights) where {F}
         _gw_evaluation(data, seed; weights), _gw_evaluation(data, seed + 1; weights)
       )
       values = f(evaluations)
-      _all_finite(values) || throw(DivideError())
+      _all_finite(values) || throw(_LocalizationPole())
       values[1] == values[2] ||
         error("localization evaluations disagree at two exact torus points")
       return values[1]
     catch exception
-      exception isa DivideError || rethrow()
+      exception isa _LocalizationPole || rethrow()
     end
   end
   error("localization encountered poles at every exact torus-point pair")

@@ -112,16 +112,22 @@ end
 
 @testset "Exact poles and retry policy" begin
   data = GWF._gw_data(projective_space(1))
-  @test_throws DivideError GWF._divide_or_pole(one(QQ), zero(QQ))
+  @test_throws GWF._LocalizationPole GWF._divide_or_pole(one(QQ), zero(QQ))
   @test GWF._divide_or_pole(big(3)//big(2), big(5)//big(7)) == 21//10
   calls = Ref(0)
   result = GWF._checked_torus_evaluations(data, nothing) do _
     calls[] += 1
-    calls[] == 1 && throw(DivideError())
+    calls[] == 1 && GWF._divide_or_pole(one(QQ), zero(QQ))
     (big(7)//big(1), big(7)//big(1))
   end
   @test result == 7
   @test calls[] == 2
+  calls[] = 0
+  @test_throws DivideError GWF._checked_torus_evaluations(data, nothing) do _
+    calls[] += 1
+    div(1, 0)
+  end
+  @test calls[] == 1
   calls[] = 0
   @test_throws DomainError GWF._checked_torus_evaluations(data, nothing) do _
     calls[] += 1
@@ -141,6 +147,12 @@ end
   end
   @test result == 1
   @test calls[] == 2
+  calls[] = 0
+  @test_throws ErrorException GWF._checked_torus_evaluations(data, nothing) do _
+    calls[] += 1
+    GWF._divide_or_pole(one(QQ), zero(QQ))
+  end
+  @test calls[] == 8
   @test_throws ErrorException GWF._foreach_unmarked_decorated_tree(data, [1, 2], [1]) do _
     error("callback exceptions propagate without leaving a producer task")
   end
