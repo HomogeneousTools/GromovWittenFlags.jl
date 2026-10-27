@@ -41,6 +41,9 @@ conditions inline where they are used. Examples must execute.
 Docstrings should identify return types and index conventions where ambiguous.
 Public examples belong in executable doctest blocks. Private contracts should
 state preconditions and storage lifetimes rather than repeat the function name.
+For a mutating helper, distinguish its returned value from the buffers it fills.
+Mathematical regressions should compare exact objects and coefficients; keep
+text rendering assertions in focused display tests.
 Changes to curve or basis conventions require an explicit migration note.
 
 Run `julia --project=. benchmark/benchmarks.jl` to compare warmed timings and

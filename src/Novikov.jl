@@ -8,6 +8,9 @@ coefficients and nonnegative integer exponents. Construct from an integer or
 finite rational constant, or a dictionary mapping exponent tuples/vectors to such
 coefficients. Construction copies and normalizes the dictionary: equivalent
 exponents are combined and zero coefficients are removed.
+`R` must be a nonnegative `Int`; `R == 0` gives the constant coefficient ring.
+The empty constructor is zero. Tuple and vector keys use iteration order for
+the variables, and exponents must fit in `Int`.
 
 Arithmetic supports addition, subtraction, polynomial multiplication, and
 exact scalar multiplication. Different variable counts belong to different
@@ -117,7 +120,14 @@ Base.hash(p::NovikovPolynomial{R}, h::UInt) where {R} = hash(p.terms, hash(R, h)
 Base.copy(p::NovikovPolynomial{R}) where {R} =
   NovikovPolynomial{R}(copy(p.terms), Val(:canonical))
 
-"""Merge two normalized polynomials with sign ±1, copying each dictionary at most once."""
+"""
+    _combine_novikov(a, b, sign)
+
+Return `a + sign*b` for normalized polynomials of the same rank, with
+`sign` equal to `1` or `-1`. Copy `a`'s dictionary once and accumulate `b`'s
+terms into it, removing cancellations. Both operands remain read-only, and
+the result owns its dictionary even when one operand is zero.
+"""
 function _combine_novikov(
   a::NovikovPolynomial{R}, b::NovikovPolynomial{R}, sign::Int
 ) where {R}

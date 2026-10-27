@@ -114,3 +114,30 @@ Aqua and independent finite-curve enumeration checks. Strict Documenter checks,
 public and private docstrings, doctests, and all benchmark reference comparisons
 pass. The degree-five extended-suite result above belongs to the earlier
 extraction-review commit.
+
+## Internal contracts and iterator follow-up
+
+Explicit zero-denominator and nonfinite-result guards now signal a private
+`_LocalizationPole`. Only that exception retries a torus pair; ordinary
+`DivideError`s propagate immediately. Regression checks exercise successful
+retry, arithmetic-error propagation, disagreement, and exhaustion of all eight
+pairs.
+
+Coloring successors reset complete preorder subtrees in place using stored
+parent indices. The output-copy contract is preserved. Brute-force comparisons
+now cover rooted colorings as well as unrooted colorings, with a distinguished
+root mark enforcing root-preserving isomorphisms. An isolated workload measures
+32.5% fewer allocated bytes; the method and scope are recorded in
+`benchmark/README.md`. Rational row selection also converts directly into its
+owned scratch vector, avoiding an intermediate collection.
+
+Private docstrings distinguish written buffers from return values and describe
+the lifetimes of rooted shape and coloring data. Novikov documentation specifies
+rank, exponent, and merge contracts. Küchle matrix regressions compare exact
+polynomials rather than their rendered strings; all four rewritten fixtures
+were checked coefficient for coefficient against their previous forms.
+
+The default suite passes 2,867 checks with bounds checking, including Aqua.
+Strict Documenter checks, doctests, pinned formatting, and warmed benchmark
+reference comparisons pass. The complete degree-five sums were not rerun in
+this follow-up; their earlier validation remains recorded above.
