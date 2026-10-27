@@ -1,5 +1,9 @@
 # Performance measurements
 
+For cross-library Fano fourfold measurements, see the isolated
+[GKMtools comparison](gkmtools/RESULTS.md) and its
+[reproduction instructions](gkmtools/README.md).
+
 Run from the package checkout:
 
 ```sh

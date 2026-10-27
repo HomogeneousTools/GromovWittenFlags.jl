@@ -1,0 +1,269 @@
+basis_lift = "billey"
+split_degrees = true
+timestamp_utc = "2026-10-27T08:48:21.494"
+prepared_backend = true
+compiled_modules = 2
+threads = 1
+samples = 3
+julia = "1.13.0"
+gkmtools_revision = "a19904bdb5b9c0158163b356dffb1cb79fd7a3c8"
+
+[packages]
+PartialFlagVarieties = "0.4.0"
+Oscar = "1.8.2"
+GromovWittenFlags = "0.1.0"
+Semisimple = "1.3.0"
+GKMtools = "1.0.0"
+
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[0, 0]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.001258542
+    seconds = [0.001354291, 0.001258542, 0.0012185]
+    bytes = [3263968, 3263968, 3263968]
+    median_bytes = 3263968
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.001419292
+    [[cases.measurements]]
+    median_seconds = 0.214221334
+    seconds = [0.214221334, 0.230439375, 0.211488666]
+    bytes = [236335312, 236335312, 236335312]
+    median_bytes = 236335312
+    backend = "GKMtools"
+    warm_seconds = 0.256626041
+    [[cases.measurements]]
+    median_seconds = 2.875e-6
+    seconds = [3.042e-6, 2.875e-6, 2.042e-6]
+    bytes = [64, 64, 64]
+    median_bytes = 64
+    backend = "GKMtools-prepared"
+    warm_seconds = 8.325e-5
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[0, 1]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.003605541
+    seconds = [0.00369775, 0.003508875, 0.003605541]
+    bytes = [8733896, 8733896, 8733896]
+    median_bytes = 8733896
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.003468459
+    [[cases.measurements]]
+    median_seconds = 0.3866565
+    seconds = [0.3866565, 0.410996125, 0.385119417]
+    bytes = [102505936, 102505936, 102505936]
+    median_bytes = 102505936
+    backend = "GKMtools"
+    warm_seconds = 0.394606625
+    [[cases.measurements]]
+    median_seconds = 0.327417208
+    seconds = [0.325018542, 0.327417208, 0.327446875]
+    bytes = [6087952, 6087952, 6087952]
+    median_bytes = 6087952
+    backend = "GKMtools-prepared"
+    warm_seconds = 0.331825
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[1, 0]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.00278575
+    seconds = [0.002872542, 0.002728, 0.00278575]
+    bytes = [6834784, 6834784, 6834784]
+    median_bytes = 6834784
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.00293175
+    [[cases.measurements]]
+    median_seconds = 0.2374
+    seconds = [0.242344958, 0.2374, 0.231208791]
+    bytes = [101074792, 101074792, 101074792]
+    median_bytes = 101074792
+    backend = "GKMtools"
+    warm_seconds = 0.245229375
+    [[cases.measurements]]
+    median_seconds = 0.160404125
+    seconds = [0.169378208, 0.15994475, 0.160404125]
+    bytes = [4665016, 4665016, 4665016]
+    median_bytes = 4665016
+    backend = "GKMtools-prepared"
+    warm_seconds = 0.158853417
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[0, 2]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.006439
+    seconds = [0.006800083, 0.006247792, 0.006439]
+    bytes = [14933560, 14933560, 14933560]
+    median_bytes = 14933560
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.00643725
+    [[cases.measurements]]
+    median_seconds = 2.947470917
+    seconds = [2.943852708, 2.947470917, 3.07421325]
+    bytes = [123672736, 123672736, 123672736]
+    median_bytes = 123672736
+    backend = "GKMtools"
+    warm_seconds = 2.985134125
+    [[cases.measurements]]
+    median_seconds = 2.905330667
+    seconds = [2.921475625, 2.905330667, 2.900517583]
+    bytes = [27235968, 27235968, 27235968]
+    median_bytes = 27235968
+    backend = "GKMtools-prepared"
+    warm_seconds = 2.95195225
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[1, 1]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.0061745
+    seconds = [0.006150708, 0.0061745, 0.006287375]
+    bytes = [13094256, 13094256, 13094256]
+    median_bytes = 13094256
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.0064085
+    [[cases.measurements]]
+    median_seconds = 1.380180125
+    seconds = [1.380180125, 1.379680625, 1.495877375]
+    bytes = [129018512, 129018512, 129018512]
+    median_bytes = 129018512
+    backend = "GKMtools"
+    warm_seconds = 1.387715292
+    [[cases.measurements]]
+    median_seconds = 1.323501541
+    seconds = [1.395748958, 1.323501541, 1.31332425]
+    bytes = [32593328, 32593328, 32593328]
+    median_bytes = 32593328
+    backend = "GKMtools-prepared"
+    warm_seconds = 1.501288
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[2, 0]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.004291958
+    seconds = [0.004291958, 0.004290667, 0.004322541]
+    bytes = [9848824, 9848824, 9848824]
+    median_bytes = 9848824
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.004401541
+    [[cases.measurements]]
+    median_seconds = 2.003006541
+    seconds = [1.888306958, 2.093990834, 2.003006541]
+    bytes = [123122152, 123122152, 123122152]
+    median_bytes = 123122152
+    backend = "GKMtools"
+    warm_seconds = 1.913837041
+    [[cases.measurements]]
+    median_seconds = 1.818253917
+    seconds = [1.818253917, 1.820426625, 1.808273209]
+    bytes = [26702856, 26702856, 26702856]
+    median_bytes = 26702856
+    backend = "GKMtools-prepared"
+    warm_seconds = 1.825726542
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[1, 2]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.017277959
+    seconds = [0.018166166, 0.017219125, 0.017277959]
+    bytes = [30472448, 30472448, 30472448]
+    median_bytes = 30472448
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.020015209
+    [[cases.measurements]]
+    median_seconds = 18.046242208
+    seconds = [19.202496708, 18.046242208, 17.535651333]
+    bytes = [342772712, 342772792, 342772712]
+    median_bytes = 342772712
+    backend = "GKMtools"
+    warm_seconds = 18.327495708
+    [[cases.measurements]]
+    median_seconds = 17.509850333
+    seconds = [17.246716666, 17.509850333, 18.217625416]
+    bytes = [246331496, 246331552, 246331464]
+    median_bytes = 246331496
+    backend = "GKMtools-prepared"
+    warm_seconds = 17.208884083
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[2, 1]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.012917875
+    seconds = [0.013078208, 0.012917875, 0.0129]
+    bytes = [23447664, 23447664, 23447664]
+    median_bytes = 23447664
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.014865292
+    [[cases.measurements]]
+    median_seconds = 17.26812375
+    seconds = [17.26812375, 17.38225425, 17.1079235]
+    bytes = [336313776, 336313776, 336313776]
+    median_bytes = 336313776
+    backend = "GKMtools"
+    warm_seconds = 17.290136125
+    [[cases.measurements]]
+    median_seconds = 17.253214333
+    seconds = [17.253214333, 17.023825834, 18.314831584]
+    bytes = [239875600, 239875624, 239875600]
+    median_bytes = 239875600
+    backend = "GKMtools-prepared"
+    warm_seconds = 17.233050792
+[[cases]]
+name = "K3-29"
+basis_size = 9
+gkm_preparation_seconds = 0.237796125
+betas = [[3, 0]]
+setup_seconds = 0.353965584
+
+    [[cases.measurements]]
+    median_seconds = 0.008341917
+    seconds = [0.008378042, 0.008319042, 0.008341917]
+    bytes = [16070792, 16070792, 16070792]
+    median_bytes = 16070792
+    backend = "GromovWittenFlags"
+    warm_seconds = 0.008816334
+    [[cases.measurements]]
+    median_seconds = 19.297349625
+    seconds = [19.297349625, 19.316934666, 18.885782917]
+    bytes = [332823816, 332823816, 332823816]
+    median_bytes = 332823816
+    backend = "GKMtools"
+    warm_seconds = 19.421161542
+    [[cases.measurements]]
+    median_seconds = 18.691117041
+    seconds = [18.691117041, 18.508138166, 19.817509125]
+    bytes = [236398728, 236398728, 236398728]
+    median_bytes = 236398728
+    backend = "GKMtools-prepared"
+    warm_seconds = 18.70859775

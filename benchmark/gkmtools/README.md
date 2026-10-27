@@ -3,7 +3,7 @@
 This isolated environment compares exact first-Chern quantum multiplication
 on Fano fourfolds. GKMtools and Oscar are benchmark dependencies only.
 The production package continues to depend on PartialFlagVarieties and
-Semisimple.
+Semisimple. See [RESULTS.md](RESULTS.md) for the measured results and decision.
 
 ## Reproduction
 

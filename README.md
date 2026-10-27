@@ -88,6 +88,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for structure and review expectations.
 The [internal manual](docs/src/internals.md) explains the localization factors,
 automorphisms, cache ownership, and private helpers. Reproducible performance
 measurements are in [benchmark/README.md](benchmark/README.md).
+The [GKMtools comparison](benchmark/gkmtools/RESULTS.md) records fourfold timings,
+Weyl-group compatibility checks, and the dependency decision.
 See [REVIEW.md](REVIEW.md) for the correctness fixes and validation evidence.
 
 ## License
