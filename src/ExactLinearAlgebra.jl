@@ -1,14 +1,15 @@
 """
     _independent_indices(matrix)
 
-Select the first linearly independent rows of an exact rational matrix,
-preserving their original order. Maintain a normalized row-echelon basis
-incrementally; each input row is reduced once. Pivot rows are kept in column
+Select the first linearly independent rows of a finite exact rational matrix,
+returning their row indices in original order. Maintain a normalized row-echelon
+basis incrementally; each input row is reduced once. Pivot rows are kept in column
 order even when a later input row introduces an earlier pivot column.
 
-The input is never mutated. For a symmetric intersection matrix, the selected
-rows also select a nonsingular principal submatrix: their coordinate classes
-form a basis modulo the pairing's radical.
+Each row is converted directly into an owned `Rational{BigInt}` scratch vector;
+the input and its views are never mutated. For a symmetric intersection matrix,
+the selected rows also select a nonsingular principal submatrix: their
+coordinate classes form a basis modulo the pairing's radical.
 """
 function _independent_indices(matrix::AbstractMatrix{<:Rational})
   selected = Int[]
@@ -16,7 +17,7 @@ function _independent_indices(matrix::AbstractMatrix{<:Rational})
   basis = Vector{_BigRational}[]
   n_columns = size(matrix, 2)
   for i in axes(matrix, 1)
-    row = _BigRational.(collect(@view matrix[i, :]))
+    row = collect(_BigRational, @view matrix[i, :])
     for (pivot, previous) in zip(pivots, basis)
       coefficient = row[pivot]
       iszero(coefficient) && continue

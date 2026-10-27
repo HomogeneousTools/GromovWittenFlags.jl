@@ -85,4 +85,6 @@ end
   @test GWF._independent_indices(QQ[0 0 1; 0 0 2; 1 2 0]) == [1, 3]
   @test GWF._exact_rank(transpose(A)) == 2
   @test GWF._exact_rank(@view A[1:2, :]) == 1
+  @test GWF._independent_indices(Rational{Int}[1 2; 2 4; 1 3]) == [1, 3]
+  @test GWF._exact_rank(zeros(QQ, 3, 0)) == 0
 end
