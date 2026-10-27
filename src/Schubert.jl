@@ -172,11 +172,20 @@ function schubert_classes(X::PartialFlagVariety)
   [_owned_schubert(data, w) for w in data.representatives]
 end
 
-"""Find the minimal representative using the orbit of the parabolic stabilizer weight."""
-function _project_to_flag(data::_GWData{DT,R}, w::WeylGroupElem{DT,R}) where {DT,R}
-  key = coefficients(data.stabilizer_weight * inv(w))
-  data.representatives[data.representative_index[key]]
+"""
+    _class_index(data, class)
+
+Return the fixed-point/Schubert index of the coset represented by `class`,
+using the orbit of the parabolic stabilizer weight. The ambient Dynkin type
+must match `data`; the word need not be a minimal coset representative.
+Incompatible insertions raise `ArgumentError`.
+"""
+function _class_index(data::_GWData{DT,R}, class::WeylGroupElem{DT,R}) where {DT,R}
+  data.representative_index[coefficients(data.stabilizer_weight * inv(class))]
 end
+
+_class_index(::_GWData, class) =
+  throw(ArgumentError("insertions must be Weyl group elements of the ambient Dynkin type"))
 
 """
     schubert_class(X::PartialFlagVariety, word)
@@ -204,7 +213,8 @@ function schubert_class(X::PartialFlagVariety, word::AbstractVector{<:Integer})
     throw(
       ArgumentError("simple-reflection indices must lie in 1:$(length(data.generators))")
     )
-  _owned_schubert(data, _project_to_flag(data, data.weyl_group(Vector{Int}(word))))
+  index = _class_index(data, data.weyl_group(Vector{Int}(word)))
+  _owned_schubert(data, data.representatives[index])
 end
 
 schubert_class(X::PartialFlagVariety, word::Tuple{Vararg{Integer}}) =
@@ -244,27 +254,22 @@ function _normalize_beta(data::_GWData, beta)
     throw(ArgumentError("curve-class coordinates must be integers"))
   all(value -> 0 <= value <= typemax(Int), beta) ||
     throw(ArgumentError("curve-class coordinates must be nonnegative machine integers"))
-  values = Int.(collect(beta))
+  values = collect(Int, beta)
   marked = marked_nodes(data.variety)
   R = rank(dynkin_type(data.variety))
-  if length(values) == length(marked)
-    compact = values
-  elseif length(values) == R
-    unmarked_nonzero = [
-      (i, values[i]) for i in unmarked_nodes(data.variety) if !iszero(values[i])
-    ]
-    isempty(unmarked_nonzero) || throw(
-      ArgumentError(
-        "curve class may be nonzero only at marked nodes; got $unmarked_nonzero"
-      ),
-    )
-    compact = values[collect(marked)]
-  else
-    throw(
-      ArgumentError(
-        "curve class needs $(length(marked)) marked-node coordinates or $R ambient coordinates"
-      ),
-    )
-  end
-  compact
+  length(values) == length(marked) && return values
+  length(values) == R || throw(
+    ArgumentError(
+      "curve class needs $(length(marked)) marked-node coordinates or $R ambient coordinates"
+    ),
+  )
+  unmarked_nonzero = [
+    (i, values[i]) for i in unmarked_nodes(data.variety) if !iszero(values[i])
+  ]
+  isempty(unmarked_nonzero) || throw(
+    ArgumentError(
+      "curve class may be nonzero only at marked nodes; got $unmarked_nonzero"
+    ),
+  )
+  values[collect(marked)]
 end

@@ -118,20 +118,6 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
 end
 
 """
-    _class_index(data, class)
-
-Return the fixed-point/Schubert index of the coset represented by `class`.
-The ambient Dynkin type must match `data`; the word need not be a minimal
-coset representative. Incompatible insertions raise `ArgumentError`.
-"""
-function _class_index(data::_GWData{DT,R}, class::WeylGroupElem{DT,R}) where {DT,R}
-  data.representative_index[coefficients(data.stabilizer_weight * inv(class))]
-end
-
-_class_index(::_GWData, class) =
-  throw(ArgumentError("insertions must be Weyl group elements of the ambient Dynkin type"))
-
-"""
     _billey(evaluation, class_index, vertex_index)
 
 Evaluate Billey's reduced-subword formula for a Schubert class at a fixed
