@@ -27,6 +27,46 @@
   end
 end
 
+@testset "Owned products preserve cached and borrowed rationals" begin
+  T = GWF.QQFieldElem
+  right = T(7) / T(11)
+  left = T(3) / T(5)
+  @test GWF._owned_mul!(left, right) === left
+  @test left == T(21) / T(55)
+  @test right == T(7) / T(11)
+  @test GWF._owned_mul!(big(3)//big(5), big(7)//big(11)) == 21//55
+
+  data = GWF._gw_data(projective_space(2))
+  evaluation = GWF._gw_evaluation(data, 0, T)
+  GWF._prepare_edges!(evaluation, [2])
+  for levels in ([1, 2], [1, 2, 2])
+    GWF._foreach_unmarked_decorated_tree(data, levels, [2]) do tree
+      # Populate the vertex caches before taking a deep snapshot: copies of
+      # dictionaries alone would still alias the mutable FLINT coefficients.
+      vertices = [GWF._vertex_factors(evaluation, tree, v)
+                  for v in eachindex(tree.colors)]
+      vertex_reference = prod(first, vertices; init=one(T))
+      edge_reference =
+        prod(
+          (
+            GWF._edge_factor(evaluation, tree.colors[parent], tree.roots[edge],
+              tree.degrees[edge]) for (edge, (parent, _)) in enumerate(tree.edges)
+          );
+          init=one(T)) / T(tree.automorphisms)
+      before = deepcopy((evaluation.vertex_factor, evaluation.edge_factor,
+        evaluation.inverse_flags, evaluation.vertex_euler, evaluation.root_values))
+      mark_weights = zeros(T, length(tree.colors))
+      @test GWF._vertex_product!(mark_weights, evaluation, tree) == vertex_reference
+      @test GWF._edge_product(evaluation, tree) == edge_reference
+      @test mark_weights == last.(vertices)
+      @test GWF._vertex_product!(mark_weights, evaluation, tree) == vertex_reference
+      @test GWF._edge_product(evaluation, tree) == edge_reference
+      @test (evaluation.vertex_factor, evaluation.edge_factor,
+        evaluation.inverse_flags, evaluation.vertex_euler, evaluation.root_values) == before
+    end
+  end
+end
+
 @testset "FLINT evaluations retain the pole and disagreement guards" begin
   T = GWF.QQFieldElem
   data = GWF._gw_data(projective_space(1))

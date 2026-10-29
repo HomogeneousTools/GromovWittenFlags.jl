@@ -10,6 +10,7 @@ module GromovWittenFlags
 using Combinatorics: permutations
 using LinearAlgebra: Diagonal, lu
 using Nemo: QQFieldElem
+import Nemo: mul!
 using PartialFlagVarieties:
   PartialFlagVariety, MarkedDynkinType, CompletelyReducibleBundle, IrrepLevi,
   ZeroLocus, marked_dynkin_type, dynkin_type, marked_nodes, unmarked_nodes,

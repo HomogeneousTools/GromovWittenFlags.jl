@@ -326,6 +326,17 @@ function _vertex_factors(evaluation::_GWEvaluation, tree::_DecoratedTree, vertex
 end
 
 """
+    _owned_mul!(left, right)
+
+Multiply an owned temporary by a read-only factor. FLINT rationals reuse the
+left operand's storage; other exact scalars return a fresh product. The caller
+must own `left` exclusively and keep it distinct from `right` and cached values.
+Return the product; the right operand is never changed.
+"""
+_owned_mul!(left, right) = left * right
+_owned_mul!(left::QQFieldElem, right::QQFieldElem) = mul!(left, left, right)
+
+"""
     _vertex_product!(mark_weights, evaluation, tree)
 
 Fill `mark_weights[1:length(tree.colors)]` with the factor contributed by an
@@ -338,7 +349,7 @@ function _vertex_product!(mark_weights, evaluation::_GWEvaluation{D,T},
   factor = one(T)
   for vertex in eachindex(tree.colors)
     zero_marks, mark_weight = _vertex_factors(evaluation, tree, vertex)
-    factor *= zero_marks
+    factor = _owned_mul!(factor, zero_marks)
     mark_weights[vertex] = mark_weight
   end
   factor
@@ -348,8 +359,11 @@ end
 function _edge_product(evaluation::_GWEvaluation{D,T}, tree::_DecoratedTree) where {D,T}
   factor = one(T) / T(tree.automorphisms)
   for (edge, (parent, _)) in enumerate(tree.edges)
-    factor *= _edge_factor(
-      evaluation, tree.colors[parent], tree.roots[edge], tree.degrees[edge]
+    factor = _owned_mul!(
+      factor,
+      _edge_factor(
+        evaluation, tree.colors[parent], tree.roots[edge], tree.degrees[edge]
+      ),
     )
     iszero(factor) && break
   end
