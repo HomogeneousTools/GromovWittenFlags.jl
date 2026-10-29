@@ -16,7 +16,7 @@ root data. The files follow this order:
 | Layer | Files | Responsibility |
 |:--|:--|:--|
 | Geometry | `Schubert.jl`, `Bundles.jl` | Cosets, acted roots, curves, and defining weights |
-| Fixed graphs | `FreeTrees.jl`, `TreeSymmetries.jl`, `Colorings.jl`, `DecoratedTrees.jl` | Tree orbits, stabilizers, and borrowed workspaces |
+| Fixed graphs | `FreeTrees.jl`, `TreeSymmetries.jl`, `Colorings.jl`, `BudgetColorings.jl`, `DecoratedTrees.jl` | Tree orbits, stabilizers, and borrowed workspaces |
 | Numeric kernels | `ExactSums.jl`, `Localization.jl` | Exact torus values, restrictions, and vertex/edge contributions |
 | Shared insertions | `QuantumBlocks.jl` | Two-point blocks with shared graph enumeration |
 | Public invariants | `Invariants.jl` | Input guards, dimension axiom, and specialization orchestration |
@@ -111,8 +111,14 @@ advances, complete subtrees in the changed suffix reset in place, using cached
 parent indices; no subtree level slices or temporary color vectors are needed.
 Rooted enumeration fixes vertex one's color and allows only root-preserving
 symmetries. Tests compare both rooted and unrooted orbits with brute force.
-Cover degrees are then
-enumerated modulo the subgroup preserving the colors. For small shapes,
+
+Decorated-tree enumeration uses a preorder callback search with a remaining
+curve budget. Each assigned edge spends its all-unit curve class; if any
+coordinate exceeds the budget, every positive-cover completion is impossible.
+Identical-sibling prefix comparisons and the unmarked central flip preserve
+the same color orbits as the original iterator, which remains a test oracle.
+The callback borrows the color/root buffers and minimum class. Cover degrees
+are then enumerated modulo the subgroup preserving the colors. For small shapes,
 permutation groups give degree-orbit representatives and stabilizer orders.
 For larger shapes, recursive canonical encodings replace explicit groups.
 The stabilizer order contributes the decorated-tree automorphism denominator;

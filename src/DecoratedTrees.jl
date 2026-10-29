@@ -245,10 +245,8 @@ function _foreach_unmarked_decorated_tree(f::F, data::_GWData, levels,
   beta::Vector{Int}) where {F}
   shape = _tree_shape(levels)
   tree = _tree_workspace(shape)
-  minimum_class = zeros(Int, length(beta))
-  for colors in _ColoringIterator(shape.levels, data.neighbors)
-    _color_tree!(minimum_class, tree, data, colors)
-    _foreach_colored_degree(f, tree, shape, data, beta, minimum_class)
+  _foreach_budget_colors(tree, shape, data, beta) do current, minimum_class
+    _foreach_colored_degree(f, current, shape, data, beta, minimum_class)
   end
   nothing
 end
@@ -312,11 +310,8 @@ function _foreach_rooted_decorated_tree(f::F, data::_GWData, levels,
   for rooted_levels in _rooted_level_sequences(_tree_shape(levels))
     shape = _tree_shape(rooted_levels)
     tree = _tree_workspace(shape)
-    minimum_class = zeros(Int, length(beta))
-    for colors in
-        _ColoringIterator(shape.levels, data.neighbors; fixed_root=true, root_color)
-      _color_tree!(minimum_class, tree, data, colors)
-      _foreach_colored_degree(f, tree, shape, data, beta, minimum_class; root=1)
+    _foreach_budget_colors(tree, shape, data, beta; root_color) do current, minimum_class
+      _foreach_colored_degree(f, current, shape, data, beta, minimum_class; root=1)
     end
   end
   nothing

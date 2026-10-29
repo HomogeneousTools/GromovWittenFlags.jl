@@ -25,6 +25,7 @@ const QQ = Rational{BigInt}
   include("schubert.jl")
   include("novikov.jl")
   include("trees.jl")
+  include("budget_colorings.jl")
   include("invariants.jl")
   include("localization.jl")
   include("quantum.jl")
