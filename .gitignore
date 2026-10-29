@@ -6,3 +6,4 @@ docs/build/
 lcov.info
 benchmark/gkmtools/results-local.toml
 benchmark/hpc-local/
+benchmark/matrix-optimization/local-results.toml

@@ -1,5 +1,8 @@
 # Performance measurements
 
+For the twenty-case exact matrix validation, local speedups, and archived
+references, see [the matrix optimization study](matrix-optimization/README.md).
+
 For cross-library Fano fourfold measurements, see the isolated
 [GKMtools comparison](gkmtools/RESULTS.md) and its
 [reproduction instructions](gkmtools/README.md).
