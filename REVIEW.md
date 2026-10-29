@@ -120,8 +120,9 @@ extraction-review commit.
 Explicit zero-denominator and nonfinite-result guards now signal a private
 `_LocalizationPole`. Only that exception retries a torus pair; ordinary
 `DivideError`s propagate immediately. Regression checks exercise successful
-retry, arithmetic-error propagation, disagreement, and exhaustion of all eight
-pairs.
+retry, arithmetic-error propagation, disagreement, and exhaustion of all sixteen
+pairs, including fallback from the eight small-coordinate pairs to the original
+eight larger-coordinate pairs.
 
 Coloring successors reset complete preorder subtrees in place using stored
 parent indices. The output-copy contract is preserved. Brute-force comparisons

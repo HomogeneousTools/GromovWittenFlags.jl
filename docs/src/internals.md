@@ -195,7 +195,8 @@ Vertex factors are evaluated before pruning their mark sums.
 Two deterministic nonsingular torus specializations must agree exactly.
 The denominator and finiteness guards signal an explicit pole with the private
 [`GromovWittenFlags._LocalizationPole`](@ref) exception. Only this signal retries
-the whole block at the next pair, for at most eight pairs. Ordinary `DivideError`s
+the whole block at the next pair. Eight small-coordinate pairs are tried first,
+followed by all eight original larger-coordinate pairs. Ordinary `DivideError`s
 propagate immediately, just as domain errors and other programming exceptions do.
 Disagreement is an error and never retries. Agreement checks consistency
 of the implementation; it is not a proof of the localization formula.

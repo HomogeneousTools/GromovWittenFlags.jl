@@ -68,17 +68,25 @@ Construct a deterministic torus specialization and its target-specific caches.
 A xorshift sequence avoids the weight hyperplanes met by arithmetic
 progressions. Weyl actions and reduced-word roots are already cached in `data`;
 their integral linear forms are evaluated before conversion to exact rationals.
+Seeds 0–15 use coordinates in 1:1009 to reduce intermediate rational sizes.
+Seeds 16–31 reproduce the original sixteen larger-coordinate points as fallback.
 """
 function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
   weights=nothing) where {T}
   R = length(data.generators)
-  state = UInt64(0x9e3779b97f4a7c15) * UInt64(seed + 1)
+  original_points = seed >= 16
+  local_seed = original_points ? seed - 16 : seed
+  state = UInt64(0x9e3779b97f4a7c15) * UInt64(local_seed + 1)
   coordinates = Vector{Int}(undef, R)
   for i in eachindex(coordinates)
     state = xor(state, state << 13)
     state = xor(state, state >> 7)
     state = xor(state, state << 17)
-    coordinates[i] = 1009 + Int(state % UInt64(1_000_003))
+    coordinates[i] = if original_points
+      1009 + Int(state % UInt64(1_000_003))
+    else
+      1 + Int(state % UInt64(1009))
+    end
   end
   point = T.(coordinates)
   values = map(c -> T(_root_value(c, coordinates)), data.root_coordinates)
@@ -419,12 +427,12 @@ _all_finite(values) = all(_all_finite, values)
 
 Run `f` on two target-bound exact evaluations and require equal finite results.
 Only explicit localization poles (`_LocalizationPole`) trigger a retry;
-ordinary arithmetic, domain, and programming errors propagate. At most eight
-deterministic pairs are attempted. A disagreement is a correctness failure,
-never a retry.
+ordinary arithmetic, domain, and programming errors propagate. Try eight small
+coordinate pairs, then all eight original larger-coordinate pairs. A disagreement
+is a correctness failure, never a retry.
 """
 function _checked_torus_evaluations(f::F, data::_GWData, weights) where {F}
-  for seed in 0:2:14
+  for seed in 0:2:30
     try
       evaluations = (
         _gw_evaluation(data, seed; weights), _gw_evaluation(data, seed + 1; weights)

@@ -152,10 +152,31 @@ end
     calls[] += 1
     GWF._divide_or_pole(one(QQ), zero(QQ))
   end
-  @test calls[] == 8
+  @test calls[] == 16
   @test_throws ErrorException GWF._foreach_unmarked_decorated_tree(data, [1, 2], [1]) do _
     error("callback exceptions propagate without leaving a producer task")
   end
+end
+
+@testset "Small torus points retain the original fallback" begin
+  data = GWF._gw_data(projective_space(3))
+  @test GWF._gw_evaluation(data, 16).point == [280818, 332829, 370777]
+  @test GWF._gw_evaluation(data, 17).point == [209940, 253325, 129902]
+  for seed in 0:15
+    point = GWF._gw_evaluation(data, seed).point
+    @test all(x -> 1 <= x <= 1009, point)
+    @test point == GWF._gw_evaluation(data, seed).point
+  end
+  calls = Ref(0)
+  result = GWF._checked_torus_evaluations(data, nothing) do evaluations
+    calls[] += 1
+    calls[] <= 8 && throw(GWF._LocalizationPole())
+    @test first(evaluations).point == GWF._gw_evaluation(data, 16).point
+    @test last(evaluations).point == GWF._gw_evaluation(data, 17).point
+    (one(QQ), one(QQ))
+  end
+  @test calls[] == 9
+  @test result == 1
 end
 
 @testset "Degree DFS versus Cartesian enumeration" begin
