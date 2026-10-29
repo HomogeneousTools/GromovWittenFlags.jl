@@ -28,6 +28,7 @@ const QQ = Rational{BigInt}
   include("budget_colorings.jl")
   include("invariants.jl")
   include("localization.jl")
+  include("flint_localization.jl")
   include("quantum.jl")
   include("paper_examples.jl")
   if get(ENV, "GWFLAGS_EXTENDED_TESTS", "false") == "true"

@@ -53,7 +53,10 @@ The heterogeneous global variety cache ends at a typed function barrier.
 Arithmetic kernels dispatch on the concrete root datum and scalar type.
 Torus-independent root coordinates use fixed-size integer vectors;
 specialization evaluates their integral linear forms before converting to
-`Rational{BigInt}`. Machine-integer degree bounds use checked arithmetic.
+exact rationals. Positive-degree quantum pair blocks use Nemo's FLINT-backed
+`QQFieldElem` internally, then convert checked coefficients to `Rational{BigInt}`
+before matrix assembly. Classical and scalar-invariant localization continue
+to use `Rational{BigInt}`. Machine-integer degree bounds use checked arithmetic.
 
 The heterogeneous variety dictionary and large-tree tuple encodings are
 deliberate boundaries. Hot arithmetic does not use `Any`-typed fields. A torus

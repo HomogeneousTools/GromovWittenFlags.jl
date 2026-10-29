@@ -103,10 +103,16 @@ function _positive_degree_pair_blocks(evaluations, classes, pairs, beta)
   map(accumulators -> map(_sum_value, accumulators), totals)
 end
 
-"""Preflight poles and require the complete two-point block to agree at two exact torus points."""
+"""
+Preflight poles and compare a complete two-point block at two exact FLINT torus
+points. Return a matrix of `Rational{BigInt}` coefficients for quantum assembly.
+"""
 function _checked_pair_block(data::_GWData, classes, pairs, beta, weights)
-  _checked_torus_evaluations(data, weights) do evaluations
+  values = _checked_torus_evaluations(data, weights, QQFieldElem) do evaluations
     foreach(evaluation -> _prepare_edges!(evaluation, beta), evaluations)
     _positive_degree_pair_blocks(evaluations, classes, pairs, beta)
   end
+  # Keep FLINT rationals inside localization. Matrix assembly, public results,
+  # and exact linear algebra retain their Rational{BigInt} coefficient type.
+  _BigRational.(values)
 end

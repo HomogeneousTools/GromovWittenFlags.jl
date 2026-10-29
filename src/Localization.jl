@@ -420,22 +420,25 @@ end
 
 """Test finiteness recursively for scalar, tuple, or matrix-valued localization results."""
 _all_finite(value::Number) = isfinite(value)
+_all_finite(value::QQFieldElem) = isfinite(value)
 _all_finite(values) = all(_all_finite, values)
 
 """
-    _checked_torus_evaluations(f, data, weights)
+    _checked_torus_evaluations(f, data, weights, T=Rational{BigInt})
 
 Run `f` on two target-bound exact evaluations and require equal finite results.
 Only explicit localization poles (`_LocalizationPole`) trigger a retry;
 ordinary arithmetic, domain, and programming errors propagate. Try eight small
 coordinate pairs, then all eight original larger-coordinate pairs. A disagreement
-is a correctness failure, never a retry.
+is a correctness failure, never a retry. `T` selects the exact scalar type
+inside each evaluation; the callback must return one result per torus point.
 """
-function _checked_torus_evaluations(f::F, data::_GWData, weights) where {F}
+function _checked_torus_evaluations(f::F, data::_GWData, weights,
+  ::Type{T}=_BigRational) where {F,T}
   for seed in 0:2:30
     try
       evaluations = (
-        _gw_evaluation(data, seed; weights), _gw_evaluation(data, seed + 1; weights)
+        _gw_evaluation(data, seed, T; weights), _gw_evaluation(data, seed + 1, T; weights)
       )
       values = f(evaluations)
       _all_finite(values) || throw(_LocalizationPole())
