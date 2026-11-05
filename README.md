@@ -71,6 +71,26 @@ See the [manual](docs/src/index.md), [conventions](docs/src/conventions.md),
 The extraction history and preserved notices are in
 [PROVENANCE.md](PROVENANCE.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
+## Scalar local monodromy
+
+`local_monodromy(coefficients, point)` and `ramification_data(coefficients)`
+compute exact local conjugacy types of a supplied scalar operator
+`L = sum(p_m(t) D^m)`, with `D=t*d/dt`.
+Row `m+1` contains the rational coefficients of `p_m` in ascending powers of `t`.
+The operator must be regular singular with rational local exponents.
+The finite resonant Frobenius kernel detects actual logarithms, including
+apparent singularities, at zero, algebraic finite points and infinity.
+
+`log_monodromy_matrix(point)` returns a rational Jordan matrix `B` whose
+`exp(2πim*B)` is conjugate to the local monodromy. These matrices are expressed
+in separate local bases, so their product is not a global monodromy relation.
+Ramification is the sum of `rank(T-I)` over geometric singularities; the defect
+subtracts twice the differential order. Algebraic loci are weighted by degree.
+Defect zero is called extremal; interpreting this as minimal ramification uses
+nontrivial irreducibility, which the code does not test. Supplying an annihilator
+does not certify its minimality for a particular period.
+See [Coates--Galkin--Kasprzyk--Strangeway, section 9](https://arxiv.org/abs/1406.4891).
+
 ## Development
 
 ```sh

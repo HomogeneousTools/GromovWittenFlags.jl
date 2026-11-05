@@ -12,4 +12,10 @@ small_quantum_multiplication
 NovikovPolynomial
 evaluate
 clear_localization_caches!
+LogMonodromyBlock
+LocalMonodromyData
+local_monodromy
+log_monodromy_matrix
+ramification_data
+ramification_defect
 ```
