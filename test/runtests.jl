@@ -30,6 +30,7 @@ const QQ = Rational{BigInt}
   include("localization.jl")
   include("flint_localization.jl")
   include("quantum.jl")
+  include("monodromy.jl")
   include("paper_examples.jl")
   if get(ENV, "GWFLAGS_EXTENDED_TESTS", "false") == "true"
     include("kuechle_c5_quantum.jl")

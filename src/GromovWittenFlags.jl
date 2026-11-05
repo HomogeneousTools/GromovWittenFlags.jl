@@ -9,7 +9,10 @@ module GromovWittenFlags
 
 using Combinatorics: permutations
 using LinearAlgebra: Diagonal, lu
-using Nemo: QQFieldElem
+import Nemo
+using Nemo: QQFieldElem, QQPolyRingElem, QQ, polynomial_ring, degree, factor,
+  coeff, zero_matrix, nullspace, parent, derivative, divexact,
+  number_field, is_irreducible, leading_coefficient
 import Nemo: mul!
 using PartialFlagVarieties:
   PartialFlagVariety, MarkedDynkinType, CompletelyReducibleBundle, IrrepLevi,
@@ -29,6 +32,8 @@ export schubert_classes, schubert_class, point_class
 export expected_gromov_witten_degree, gromov_witten_invariant
 export fano_curve_classes, small_quantum_multiplication
 export NovikovPolynomial, evaluate, clear_localization_caches!
+export LogMonodromyBlock, LocalMonodromyData, local_monodromy
+export log_monodromy_matrix, ramification_data, ramification_defect
 
 """Exact coefficient field; localization cancellations must never pass through floating point."""
 const _BigRational = Rational{BigInt}
@@ -48,5 +53,6 @@ include("Novikov.jl")
 include("ExactLinearAlgebra.jl")
 include("Quantum.jl")
 include("Caches.jl")
+include("Monodromy.jl")
 
 end
