@@ -84,7 +84,12 @@ arrays as read-only, as well as avoiding references that outlive a callback.
 
 ## Schubert restrictions
 
-[`GromovWittenFlags._billey`](@ref) evaluates the reduced-subword formula.
+[`GromovWittenFlags._billey`](@ref) evaluates the reduced-subword formula of
+Sara C. Billey,
+[*Kostant polynomials and the cohomology ring for G/B*](https://doi.org/10.1215/S0012-7094-99-09606-0),
+Duke Math. J. 96 (1999), no. 1, 205–224, Theorem 4, equation (5.3)
+([MR1663931](https://mathscinet.ams.org/mathscinet/relay-station?mr=1663931);
+[author's PDF](https://sites.math.washington.edu/~billey/papers/kostant.polys.pdf#page=12)).
 For a target class, [`GromovWittenFlags._billey_plan`](@ref) builds an automaton
 of all possible reduced prefixes of that target. It obtains these by repeated
 right descents; the dependency calls this operation `bruhat_descendants`,

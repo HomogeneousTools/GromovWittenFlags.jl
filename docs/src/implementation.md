@@ -7,7 +7,8 @@ or extending its module at runtime.
 
 The localization formulas come from the root-theoretic construction in
 [arXiv:2609.21914v2](https://arxiv.org/abs/2609.21914v2).
-Schubert restrictions use a cached automaton for the reduced-subword formula.
+Schubert restrictions use a cached automaton for
+[Billey's reduced-subword formula (1999), Theorem 4, equation (5.3)](https://doi.org/10.1215/S0012-7094-99-09606-0).
 Decorated trees enumerate fixed loci; automorphism and cover factors are
 included. Quantum blocks sum labeled mark placements on unmarked trees using
 orbit–stabilizer, sharing graph enumeration between insertion pairs and the
