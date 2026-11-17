@@ -124,6 +124,8 @@ Return the cached reduced-subword automaton for a Schubert class. Repeatedly
 deleting right descents enumerates precisely the prefixes of reduced words
 of the target. Other Weyl elements cannot contribute to its restriction and
 are excluded before any rational arithmetic is performed.
+
+The subword formula is [Billey (1999), Theorem 4, equation (5.3)](https://doi.org/10.1215/S0012-7094-99-09606-0).
 """
 function _billey_plan(data::_GWData, class_index::Int)
   lock(data.billey_lock) do

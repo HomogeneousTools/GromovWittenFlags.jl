@@ -135,6 +135,11 @@ at most once. The diagonal restriction is simply the product of word roots.
 Both integer arguments index `evaluation.data.representatives`. This
 memoized reader updates `evaluation.billey` and may build a structural plan;
 it never changes the geometry or an already computed restriction.
+
+See Sara C. Billey,
+[*Kostant polynomials and the cohomology ring for G/B*](https://doi.org/10.1215/S0012-7094-99-09606-0),
+Duke Math. J. 96 (1999), 205–224, Theorem 4, equation (5.3)
+([MR1663931](https://mathscinet.ams.org/mathscinet/relay-station?mr=1663931)).
 """
 function _billey(evaluation::_GWEvaluation{D,T}, class_index::Int,
   vertex_index::Int) where {D,T}
