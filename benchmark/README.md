@@ -1,5 +1,8 @@
 # Performance measurements
 
+For the complete certified computation and cross-process checkpoint replay,
+see [the Peskine reproducibility milestone](peskine/README.md).
+
 For the twenty-case exact matrix validation, local speedups, and archived
 references, see [the matrix optimization study](matrix-optimization/README.md).
 

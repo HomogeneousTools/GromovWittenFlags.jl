@@ -1,16 +1,21 @@
 """
     GromovWittenFlags
 
+A largely automatic Julia port of the Python/SageMath gwflags software,
+developed using language-model tools. See PROVENANCE.md for upstream credits.
+
 Exact genus-zero primary Gromov--Witten invariants of partial flag varieties
 and Euler-twisted invariants of supported homogeneous zero loci.
 Construct varieties and bundles with PartialFlagVarieties.jl.
 """
 module GromovWittenFlags
 
+import Nemo, Distributed, Serialization, SHA, TOML
+
 using Combinatorics: permutations
 using LinearAlgebra: Diagonal, lu
 using Nemo: QQFieldElem
-import Nemo: mul!
+import Nemo: mul!, addmul!
 using PartialFlagVarieties:
   PartialFlagVariety, MarkedDynkinType, CompletelyReducibleBundle, IrrepLevi,
   ZeroLocus, marked_dynkin_type, dynkin_type, marked_nodes, unmarked_nodes,
@@ -29,6 +34,8 @@ export schubert_classes, schubert_class, point_class
 export expected_gromov_witten_degree, gromov_witten_invariant
 export fano_curve_classes, small_quantum_multiplication
 export NovikovPolynomial, evaluate, clear_localization_caches!
+export ConvexEulerTwist
+export certified_pair_invariants, equivariant_flag_integral, cyclic_quantum_algebra
 
 """Exact coefficient field; localization cancellations must never pass through floating point."""
 const _BigRational = Rational{BigInt}
@@ -42,10 +49,16 @@ include("BudgetColorings.jl")
 include("DecoratedTrees.jl")
 include("ExactSums.jl")
 include("Localization.jl")
+include("BranchLocalization.jl")
 include("QuantumBlocks.jl")
 include("Invariants.jl")
 include("Novikov.jl")
 include("ExactLinearAlgebra.jl")
+include("CertifiedArithmetic.jl")
+include("CertifiedDenominators.jl")
+include("CertifiedLocalization.jl")
+include("ClassicalIntegration.jl")
+include("CyclicAlgebra.jl")
 include("Quantum.jl")
 include("Caches.jl")
 

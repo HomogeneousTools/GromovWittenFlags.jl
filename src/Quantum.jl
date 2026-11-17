@@ -167,7 +167,21 @@ codimension minus half the target dimension.
 Explicit `betas` define a finite truncation: include zero for the classical
 term; duplicates are ignored. Otherwise [`fano_curve_classes`](@ref) supplies
 the finite list. The defining bundle must satisfy the supported Euler-twist
-weight condition described in the manual.
+weight condition, or be a `ConvexEulerTwist` with a geometric convexity
+certificate. In the latter case the supplied graded class is used only to
+compute the full signed index of the actual bundle.
+
+Set `algorithm=:branches` to resum rooted branches by power-series recursion;
+the default `:trees` uses explicit graph enumeration. `progress` may be a
+callback receiving degree/state information from the branch backend.
+
+Set `arithmetic=:certified` to use the branch backend over independent prime
+fields, with proved denominator and magnitude bounds and deterministic rational
+recovery. `workers` selects a bounded Distributed process pool, `checkpoint`
+selects an atomic TOML checkpoint directory, and `torus_seeds` selects two
+distinct nonsingular exact specializations. The result additionally contains
+`certification` records. See [`certified_pair_invariants`](@ref) for checkpoint
+semantics. `worker_heap_size` is a per-worker GC hint, not a hard memory limit.
 
 # Examples
 ```jldoctest
@@ -180,19 +194,47 @@ julia> evaluate(result.matrix[1, 2], (3,))
 6//1
 ```
 """
-function small_quantum_multiplication(X::PartialFlagVariety; bundle=nothing, betas=nothing)
-  _small_quantum_multiplication(_gw_data(X), bundle, betas)
+function small_quantum_multiplication(X::PartialFlagVariety; bundle=nothing, betas=nothing,
+  algorithm=:trees, progress=nothing, arithmetic=:rational, workers=0,
+  worker_heap_size=nothing, checkpoint=nothing, torus_seeds=(0, 3), max_primes=256)
+  _small_quantum_multiplication(_gw_data(X), bundle, betas; algorithm, progress,
+    arithmetic, workers, worker_heap_size, checkpoint, torus_seeds, max_primes)
 end
 
 """Validate target and curve inputs before constructing intersection matrices."""
-function _small_quantum_multiplication(data::_GWData, bundle, betas)
+function _small_quantum_multiplication(data::_GWData, bundle, betas;
+  algorithm=:trees, progress=nothing, arithmetic=:rational, workers=0,
+  worker_heap_size=nothing, checkpoint=nothing, torus_seeds=(0, 3), max_primes=256)
+  _check_localization_algorithm(algorithm)
+  arithmetic in (:rational, :certified) ||
+    throw(ArgumentError("unknown arithmetic: $arithmetic"))
+  if arithmetic == :rational
+    (workers == 0 && checkpoint === nothing) ||
+      throw(ArgumentError("workers and checkpoints require arithmetic=:certified"))
+  end
   dim, c, weights = _complete_intersection_data(data, bundle)
   beta_list = if betas === nothing
     last(_fano_curve_classes(data, dim, c))
   else
     unique([_normalize_beta(data, beta) for beta in betas])
   end
-  _quantum_multiplication(Val(picard_rank(data.variety)), data, dim, c, weights, beta_list)
+  if arithmetic == :certified
+    certificates = Any[]
+    result = _cert_with_pool(workers; worker_heap_size) do pool
+      pair_evaluator =
+        (classes, pairs, beta) -> begin
+          result = _cert_pair_block(data, classes, pairs, beta, weights, pool;
+            checkpoint, torus_seeds, progress, max_primes)
+          push!(certificates, result.certificate)
+          result.values
+        end
+      _quantum_multiplication(Val(picard_rank(data.variety)), data, dim, c, weights,
+        beta_list; algorithm=:branches, progress, pair_evaluator)
+    end
+    return merge(result, (; certification=certificates))
+  end
+  _quantum_multiplication(Val(picard_rank(data.variety)), data, dim, c, weights,
+    beta_list; algorithm, progress)
 end
 
 """
@@ -204,7 +246,7 @@ only after this solve. This avoids a matrix inverse and repeated polynomial
 copies in a cubic matrix-multiplication loop. `P` specializes the Novikov rank.
 """
 function _quantum_multiplication(::Val{P}, data::_GWData, dim::Int, c, weights,
-  beta_list) where {P}
+  beta_list; algorithm=:trees, progress=nothing, pair_evaluator=nothing) where {P}
   metric_full, classical_full = _classical_matrices(data, dim, c, weights)
   indices = if weights === nothing
     collect(eachindex(data.representatives))
@@ -227,10 +269,15 @@ function _quantum_multiplication(::Val{P}, data::_GWData, dim::Int, c, weights,
       pairs = [
         (i, j) for i in 1:n for j in i:n
         if
-        data.codimensions[indices[i]] + data.codimensions[indices[j]] == required_degree
+        data.codimensions[indices[i]] > 0 && data.codimensions[indices[j]] > 0 &&
+          data.codimensions[indices[i]] + data.codimensions[indices[j]] == required_degree
       ]
       isempty(pairs) && continue
-      invariants = _checked_pair_block(data, indices, pairs, beta, weights)
+      invariants = if pair_evaluator === nothing
+        _checked_pair_block(data, indices, pairs, beta, weights; algorithm, progress)
+      else
+        pair_evaluator(indices, pairs, beta)
+      end
       block = zeros(_BigRational, n, n)
       for ((i, j), invariant) in zip(pairs, invariants)
         block[i, j] = c_beta * invariant
@@ -244,13 +291,15 @@ function _quantum_multiplication(::Val{P}, data::_GWData, dim::Int, c, weights,
       _add_novikov_term!(matrix[row, column], beta, values[row, column])
     end
   end
-  grading = Diagonal([(2 * data.codimensions[i] - dim) // 2 for i in indices])
+  grading = Diagonal([(2 * data.codimensions[i] - dim)//2 for i in indices])
   (; matrix, grading, basis, metric)
 end
 
 fano_curve_classes(Z::ZeroLocus) =
   fano_curve_classes(ambient_variety(Z); bundle=defining_bundle(Z))
 
-function small_quantum_multiplication(Z::ZeroLocus; betas=nothing)
-  small_quantum_multiplication(ambient_variety(Z); bundle=defining_bundle(Z), betas)
+function small_quantum_multiplication(Z::ZeroLocus; betas=nothing,
+  algorithm=:trees, progress=nothing, kwargs...)
+  small_quantum_multiplication(ambient_variety(Z); bundle=defining_bundle(Z), betas,
+    algorithm, progress, kwargs...)
 end

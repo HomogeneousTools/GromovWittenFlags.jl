@@ -43,6 +43,12 @@ weight–coroot pairing is rejected explicitly. A zero torus weight is also
 rejected: its Euler factors require a fiber-equivariant regularization that
 this package does not implement. In particular, a trivial summand is unsupported.
 
+An actual convex bundle with nonsplit graded pieces can instead be supplied as
+[`ConvexEulerTwist`](@ref). The full signed index is assembled and identical
+characters are cancelled before numerical specialization. A geometric convexity
+certificate and a regular section are caller-supplied hypotheses. See
+[Certified computation](@ref) for the contract and an executable model.
+
 ## Ambient quantum multiplication
 
 For a zero locus, the ambient intersection pairing may be degenerate.
@@ -69,7 +75,9 @@ a truncation, whose completeness is the caller's responsibility.
 Answers lie in `Rational{BigInt}`. The engine retries accidental poles and
 requires agreement at two deterministic nonsingular torus points.
 Agreement is an implementation check, not a proof of the localization formula.
-No floating point, modular reconstruction, or Python call participates.
+No floating point or Python call participates. The default backend sums exact
+rationals; the opt-in certified backend uses proved bounds and modular
+reconstruction, as described in [Certified computation](@ref).
 Only a localization pole triggers a retry; disagreement and unrelated errors
 propagate. Machine-integer overflow in curve and dimension bounds raises an
 error rather than changing the dimension test silently.

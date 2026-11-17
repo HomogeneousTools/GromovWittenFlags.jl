@@ -142,3 +142,32 @@ The default suite passes 2,867 checks with bounds checking, including Aqua.
 Strict Documenter checks, doctests, pinned formatting, and warmed benchmark
 reference comparisons pass. The complete degree-five sums were not rerun in
 this follow-up; their earlier validation remains recorded above.
+
+## Certified backend and public 0.1.0
+
+The release adds branch recursion, full convex Euler indices, formal denominator
+bounds, integer magnitude bounds, deterministic modular recovery, process-local
+workers and atomic source-bound checkpoints. These are opt-in computational
+tools; ordinary rational tree localization remains the default. The certified
+API and checkpoint schema are experimental in 0.1.0.
+
+The candidate passed 502,590 package checks on Aion with Julia 1.11.4, including
+Aqua, parallel worker cleanup, corruption and interruption recovery, and
+certificate identity rejection. Generic certified comparisons cover a
+Grassmannian, a cubic fourfold and a nonsplit presentation of the projective
+plane. Branch checks also compare individual torus values with the independent
+tree enumerator, including non-simply-laced root systems and multiple marks.
+Three additional complete Küchle c5/b8 branch-matrix comparisons passed.
+
+Strict Documenter checks and doctests, the pinned formatting check, and all
+41 checks of the portable Peskine verifier passed locally. The latter reads a
+completed result and checks its polynomial algebra export; it does not repeat
+localization. The earlier full Peskine regeneration and separate checkpoint
+replay are recorded as a historical milestone in `benchmark/peskine`.
+Those measurements belong to the preserved prototype source, not to the
+subsequently formatted release tree.
+
+Case-specific geometry and reference values live under `examples/peskine`.
+The arithmetic engine contains no Peskine model switch. Its certificates do
+not establish the geometric localization hypotheses, closure of an ambient
+projection, monodromy, or the passage from spectral factors to Hodge atoms.

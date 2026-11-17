@@ -21,6 +21,7 @@ makedocs(;
     "Home" => "index.md",
     "Getting started" => "getting_started.md",
     "Conventions and scope" => "conventions.md",
+    "Certified computation" => "certified.md",
     "Implementation" => "implementation.md",
     "API reference" => "api.md",
     "Internals" => "internals.md",

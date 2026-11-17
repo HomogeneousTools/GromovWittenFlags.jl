@@ -29,6 +29,9 @@ const QQ = Rational{BigInt}
   include("invariants.jl")
   include("localization.jl")
   include("flint_localization.jl")
+  include("index_twists.jl")
+  include("branch_localization.jl")
+  include("certified.jl")
   include("quantum.jl")
   include("paper_examples.jl")
   if get(ENV, "GWFLAGS_EXTENDED_TESTS", "false") == "true"

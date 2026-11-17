@@ -37,6 +37,23 @@ jobs:
         run: |
           julia --project=. examples/ProjectiveSpace.jl
           julia --project=. examples/ZeroLoci.jl
+          julia --project=. examples/CertifiedQuantum.jl
+
+  certified-parallel:
+    name: Certified parallel workers and checkpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5.0.1
+      - uses: julia-actions/setup-julia@v3.0.1
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1.6.0
+      - name: Tests with parallel certification enabled
+        env:
+          GWFLAGS_PARALLEL_TESTS: 'true'
+        run: julia --project=. -e 'using Pkg; Pkg.test(; julia_args=["--check-bounds=yes"])'
 
   extended:
     name: Fourfold regressions

@@ -12,4 +12,8 @@ small_quantum_multiplication
 NovikovPolynomial
 evaluate
 clear_localization_caches!
+ConvexEulerTwist
+certified_pair_invariants
+equivariant_flag_integral
+cyclic_quantum_algebra
 ```

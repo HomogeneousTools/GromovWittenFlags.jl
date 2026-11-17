@@ -2,13 +2,15 @@
 
 ## Upstream gwflags
 
-GromovWittenFlags.jl is a semi-automated Julia port of
-[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions), the
+GromovWittenFlags.jl is a **largely automatic Julia port of
+[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions)**, the
 Python/SageMath implementation accompanying *On the atomic decomposition of
 complete intersection in flag varieties* by Boris Alexeev, Leonardo F. Cavenaghi,
 Giovane Galindo, Bogdan Georgiev, Ludmil Katzarkov, and Pedro Antonio Muniz Martins.
-The Julia translation and subsequent restructuring, review, tests, and
-optimizations were developed with language-model assistance.
+The translation and much of the subsequent restructuring, testing, and
+optimization were carried out automatically using language-model tools.
+The original gwflags implementation and accompanying mathematical work are
+the upstream sources of this port.
 
 The upstream [project credits](https://github.com/leonardofcavenaghi/atomicdecompositions/blob/affbf8ff6c251dc72a0bfaab5f3ddb35251e6d24/docs/about.md)
 identify Ludmil Katzarkov and Maxim Kontsevich as project leaders and list
@@ -76,3 +78,24 @@ using GromovWittenFlags
 The computational API names are preserved. A package version containing the
 old embedded quantum implementation should be replaced before loading both
 packages, to avoid conflicting exports.
+
+## Certified branch extension
+
+The 0.1.0 release incorporates the subsequent branch recursion, convex Euler
+index twist, formal Gauss denominator certificates, integer magnitude bounds,
+and modular recovery developed during the Peskine computation. Parallel job
+orchestration and source-bound atomic checkpoints use Julia standard libraries.
+The ordinary exact-rational API remains available and is the default.
+
+These modules are general computational tools. The Peskine flag/bundle model,
+its Hodge-theoretic hypotheses, reference numbers and performance milestone
+are in `examples/peskine` and `benchmark/peskine`, outside production code.
+The frozen prototype arithmetic and checkpoints remain in the separate original
+computation archive. Formatting and release documentation change source-bound
+checkpoint identities, so those prototype checkpoints must not be presented as
+checkpoints produced by the final release source.
+
+The extension was developed largely automatically using language-model tools,
+like the earlier translation.
+Its regression checks and exact numerical certificates complement review of
+the mathematical formulas; they do not prove the geometric hypotheses.

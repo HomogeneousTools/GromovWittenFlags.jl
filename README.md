@@ -1,16 +1,19 @@
 # GromovWittenFlags.jl
 
-Exact genus-zero Gromov–Witten invariants of partial flag varieties and smooth
-zero loci of supported homogeneous bundles, using root-theoretic localization.
-
-This is a semi-automated Julia port of
-[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions), the
+GromovWittenFlags.jl is a **largely automatic Julia port of
+[gwflags](https://github.com/leonardofcavenaghi/atomicdecompositions)**, the
 Python/SageMath software accompanying
 [*On the atomic decomposition of complete intersection in flag varieties*](https://arxiv.org/abs/2609.21914v2)
 by Boris Alexeev, Leonardo F. Cavenaghi, Giovane Galindo, Bogdan Georgiev,
 Ludmil Katzarkov, and Pedro Antonio Muniz Martins.
-The Julia port was developed with language-model assistance and subsequently
-restructured, reviewed, tested, and optimized for Julia.
+The translation and much of the subsequent restructuring, testing, and
+optimization were carried out automatically using language-model tools.
+The original gwflags implementation and mathematical work are credited above;
+their provenance and license notices are preserved below.
+
+The package computes exact genus-zero Gromov–Witten invariants of partial flag
+varieties and smooth zero loci of supported homogeneous bundles, using
+root-theoretic localization.
 
 Part of [HomogeneousTools](https://homogeneous.tools), built on
 [PartialFlagVarieties.jl](https://github.com/HomogeneousTools/PartialFlagVarieties.jl)
@@ -21,11 +24,11 @@ Schubert localization and quantum computations.
 ## Installation
 
 Requires Julia ≥ 1.11 and PartialFlagVarieties 0.4. This package is currently
-unregistered. From a local checkout:
+unregistered. Install the public release directly from GitHub:
 
 ```julia
 using Pkg
-Pkg.develop(path="/path/to/GromovWittenFlags.jl")
+Pkg.add(url="https://github.com/HomogeneousTools/GromovWittenFlags.jl", rev="v0.1.0")
 ```
 
 ## Quick start
@@ -53,8 +56,11 @@ evaluate.(result.matrix)  # [0 0 3; 3 0 0; 0 3 0], all Novikov variables = 1
   complex codimensions. Ambient curve coordinates follow `marked_nodes(X)`.
 - Zero-locus invariants use restricted ambient insertions and Euler twisting.
   Smoothness and regularity of the defining section are assumptions.
-  Every defining weight must pair nonnegatively with the nonparabolic positive
-  coroots; zero weights require a regularization that is not implemented.
+  Ordinary bundles must have nonnegative weight–coroot pairings. An actual
+  convex bundle with nonsplit graded pieces can instead be represented by
+  `ConvexEulerTwist(graded; certificate="...")`; its geometric convexity and
+  regular section are caller-supplied hypotheses. Zero weights require a
+  regularization that is not implemented.
 - Quantum multiplication is the flag-ambient projection of multiplication by
   the **zero locus's** first Chern class.
   The result contains `matrix`, `grading`, `basis`, and `metric`. For zero loci,
@@ -100,6 +106,36 @@ measurements are in [benchmark/README.md](benchmark/README.md).
 The [GKMtools comparison](benchmark/gkmtools/RESULTS.md) records fourfold timings,
 Weyl-group compatibility checks, and the dependency decision.
 See [REVIEW.md](REVIEW.md) for the correctness fixes and validation evidence.
+
+## Branch recursion and certified arithmetic
+
+Use `algorithm=:branches` to resum decorated trees by a triangular power-series
+recursion. The ordinary exact-rational API remains the default.
+The opt-in `arithmetic=:certified` backend instead combines checked prime-field
+evaluations with proved denominator and integer magnitude bounds. It returns
+exact rational answers without assuming integrality. For example:
+
+```julia
+result = small_quantum_multiplication(projective_space(2);
+    arithmetic=:certified, workers=2, checkpoint="gw-checkpoints")
+```
+
+The certified backend and checkpoint schema are **experimental in 0.1.0**.
+The small test cases cover ordinary flags, split bundles and an index twist;
+the complete Peskine computation is a larger regression benchmark. Supported
+geometric hypotheses, singular-seed handling, checkpoint identity, and limits
+are documented in the [certified computation manual](docs/src/certified.md).
+
+`equivariant_flag_integral` provides exact classical flag integrals.
+`cyclic_quantum_algebra` reconstructs a finite algebra when its unit is cyclic
+for the supplied multiplication operator. Primary factors alone are not a
+geometric atom decomposition; closure and Hodge-theoretic hypotheses must be
+established separately.
+
+The portable Peskine example is in [examples/peskine](examples/peskine).
+Case-specific geometric assertions, numerical references and measured timings
+remain outside the production modules. It is a reproducibility checkpoint for
+future optimizations, not a special case in the quantum engine.
 
 ## License
 

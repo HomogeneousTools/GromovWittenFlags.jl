@@ -2,8 +2,9 @@
 
 ## gwflags
 
-GromovWittenFlags.jl is a semi-automated Julia port of the Python/SageMath
-[gwflags software](https://github.com/leonardofcavenaghi/atomicdecompositions).
+GromovWittenFlags.jl is a **largely automatic Julia port of the Python/SageMath
+[gwflags software](https://github.com/leonardofcavenaghi/atomicdecompositions)**.
+The translation and much of the subsequent development used language-model tools.
 The upstream copyright notice is:
 
 > Copyright (c) 2026 Leonardo Cavenaghi

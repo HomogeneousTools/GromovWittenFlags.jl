@@ -2,12 +2,15 @@
 
 ## Installation
 
-For this unregistered package, develop a local checkout:
+The package is currently unregistered. Install the public release by tag:
 
 ```julia
 using Pkg
-Pkg.develop(path="/path/to/GromovWittenFlags.jl")
+Pkg.add(url="https://github.com/HomogeneousTools/GromovWittenFlags.jl", rev="v0.1.0")
 ```
+
+For development, use `Pkg.develop(path="/path/to/GromovWittenFlags.jl")`
+with a local checkout instead.
 
 Use `using PartialFlagVarieties, GromovWittenFlags` in computation scripts.
 No patched branch of PartialFlagVarieties or Python environment is required.

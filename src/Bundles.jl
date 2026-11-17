@@ -1,3 +1,33 @@
+"""
+    ConvexEulerTwist(graded; certificate)
+
+Euler twist by the equivariant K-class `graded` of an actual genus-zero
+convex bundle. `graded` is a `CompletelyReducibleBundle` representing that
+K-class, and need not itself be convex or admit a regular section.
+
+The caller supplies a nonempty explanation in `certificate` establishing
+the actual bundle and its convexity. To interpret the result as zero-locus
+invariants, a regular section of the actual bundle is also required.
+These geometric assertions are not inferred from the graded pieces.
+
+Unlike the ordinary bundle input, this input permits negative graded
+splittings: the full edge index H^0-H^1 is assembled and equal characters
+are cancelled before torus specialization. A remaining negative index
+multiplicity is rejected. Identically zero fiber weights still require
+fiber-equivariant regularization and are unsupported.
+"""
+struct ConvexEulerTwist
+  graded::CompletelyReducibleBundle
+  certificate::String
+
+  function ConvexEulerTwist(graded::CompletelyReducibleBundle;
+    certificate::AbstractString)
+    isempty(strip(certificate)) &&
+      throw(ArgumentError("a convexity certificate is required"))
+    new(graded, String(certificate))
+  end
+end
+
 """First Chern weight of the flag tangent bundle, in ambient fundamental weights."""
 function _chern_coordinates(data::_GWData)
   DT = dynkin_type(data.variety)
@@ -21,13 +51,15 @@ Validate a target and return `(dimension, chern_coordinates, weights)`.
 `nothing` denotes the untwisted ambient variety; an empty weight vector denotes
 a zero-rank defining bundle. These have the same mathematical effect.
 
-The implemented Euler twist requires nonnegative weight–coroot pairings.
-This is an explicit sufficient input condition, not a test of general bundle
-convexity. A zero torus weight requires an additional fiber-equivariant
-regularization, which this package does not implement.
+Ordinary bundle input requires nonnegative weight–coroot pairings, a
+sufficient condition rather than a general convexity test. ConvexEulerTwist
+instead carries an explicit geometric convexity certificate for the actual
+bundle represented by the supplied K-class.
 """
 function _complete_intersection_data(data::_GWData{DT,R}, E) where {DT,R}
   E === nothing && return (dimension(data.variety), _chern_coordinates(data), nothing)
+  certified = E isa ConvexEulerTwist
+  certified && (E = E.graded)
   E isa CompletelyReducibleBundle || throw(
     ArgumentError("the defining bundle must be a CompletelyReducibleBundle")
   )
@@ -41,13 +73,15 @@ function _complete_intersection_data(data::_GWData{DT,R}, E) where {DT,R}
       "a defining bundle with a zero torus weight requires fiber-equivariant regularization"
     ),
   )
-  for (q, root_index) in enumerate(data.nonparabolic_indices), λ in weights
-    degree_on_curve = _root_coroot_pairing(λ, data.positive_coroots[root_index])
-    degree_on_curve >= 0 || throw(
-      ArgumentError(
-        "the Euler-twist weight condition fails: pairing $degree_on_curve on invariant curve $q"
-      ),
-    )
+  if !certified
+    for (q, root_index) in enumerate(data.nonparabolic_indices), λ in weights
+      degree_on_curve = _root_coroot_pairing(λ, data.positive_coroots[root_index])
+      degree_on_curve >= 0 || throw(
+        ArgumentError(
+          "the Euler-twist weight condition fails: pairing $degree_on_curve on invariant curve $q"
+        ),
+      )
+    end
   end
   c = _chern_coordinates(data) - _bundle_chern_coordinates(E)
   (dim, c, weights)

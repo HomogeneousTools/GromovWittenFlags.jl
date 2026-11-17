@@ -19,6 +19,8 @@ struct _GWEvaluation{D,T}
   word_values::Vector{Vector{T}}
   fiber_values::Matrix{T}
   splittings::Matrix{Int}
+  weight_coordinates::Matrix{Int}
+  index_plans::Union{Nothing,Dict{Tuple{Int,Int},Vector{NTuple{3,Int}}}}
   vertex_euler::Vector{T}
   billey::Dict{Tuple{Int,Int},T}
   edge_factor::Dict{NTuple{3,Int},T}
@@ -100,6 +102,7 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
   n_weights = weights === nothing ? 0 : length(weights)
   fiber_values = Matrix{T}(undef, length(tangent_euler), n_weights)
   splittings = Matrix{Int}(undef, n_weights, length(data.nonparabolic_indices))
+  weight_coordinates = Matrix{Int}(undef, R, n_weights)
   vertex_euler = copy(tangent_euler)
   if n_weights > 0
     # Fundamental-weight coordinates must be converted to simple-root
@@ -107,6 +110,7 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
     # Borel–Weil–Bott weights into actual bundle-fiber characters.
     Cinv = _BigRational.(cartan_matrix_inverse(dynkin_type(data.variety)))
     for (j, weight) in enumerate(weights)
+      weight_coordinates[:, j] .= coefficients(weight)
       for (color, w_inverse) in enumerate(data.inverse_representatives)
         root_coordinates = Cinv * coefficients(weight * w_inverse)
         fiber_values[color, j] = -sum(T(root_coordinates[i]) * point[i] for i in 1:R)
@@ -120,9 +124,60 @@ function _gw_evaluation(data::_GWData, seed::Int, ::Type{T}=_BigRational;
       vertex_euler[color] = _divide_or_pole(tangent_euler[color], bundle_euler)
     end
   end
+  index_plans =
+    any(<(0), splittings) ?
+    Dict{Tuple{Int,Int},Vector{NTuple{3,Int}}}() : nothing
   _GWEvaluation(data, point, values, word_values, fiber_values,
-    splittings, vertex_euler, Dict{Tuple{Int,Int},T}(), Dict{NTuple{3,Int},T}(),
+    splittings, weight_coordinates, index_plans, vertex_euler,
+    Dict{Tuple{Int,Int},T}(), Dict{NTuple{3,Int},T}(),
     Dict{NTuple{3,Int},NTuple{2,T}}(), Dict{NTuple{5,Int},NTuple{2,T}}())
+end
+
+"""
+    _build_edge_index_terms(data, weight_coordinates, splittings, root, degree)
+
+Return `(fiber_index, shift, multiplicity)` for the full covered-edge index.
+Its character is fiber + shift*root/degree. Integer fundamental-weight
+coordinates, multiplied by the cover degree, identify equal characters
+before numerical specialization. Negative graded H^1 characters subtract
+from H^0 characters. Convexity requires every surviving multiplicity to be
+nonnegative; an identically zero surviving character needs regularization.
+"""
+function _build_edge_index_terms(data::_GWData{DT,R}, weight_coordinates,
+  splittings, root::Int, degree::Int) where {DT,R}
+  alpha = coefficients(
+    WeightLatticeElem(data.positive_roots[data.nonparabolic_indices[root]])
+  )
+  counts = Dict{SVector{R,Int},NTuple{3,Int}}()
+  for j in axes(weight_coordinates, 2)
+    m = Base.Checked.checked_mul(degree, splittings[j, root])
+    sign = m >= 0 ? 1 : -1
+    indices = m >= 0 ? (0:m) : (1:(-m - 1))
+    for k in indices
+      shift = sign * k
+      key = SVector{R,Int}(
+        ntuple(i ->
+            -degree * weight_coordinates[i, j] + shift * alpha[i], R),
+      )
+      old = get(counts, key, (j, shift, 0))
+      counts[key] = (old[1], old[2], old[3] + sign)
+    end
+  end
+  terms = NTuple{3,Int}[]
+  for (key, term) in sort!(collect(counts); by=first)
+    term[3] == 0 && continue
+    term[3] > 0 || throw(
+      ArgumentError(
+        "the supplied convex Euler twist has a negative edge-index multiplicity " *
+        "on invariant curve $root, cover degree $degree"),
+    )
+    any(!iszero, key) || throw(
+      ArgumentError(
+        "a zero edge-index character requires fiber-equivariant regularization"),
+    )
+    push!(terms, term)
+  end
+  terms
 end
 
 """
@@ -219,12 +274,22 @@ function _edge_factor(evaluation::_GWEvaluation{D,T}, color::Int,
         end
       end
     end
-    # The Euler twist multiplies the section weights, including both endpoints
-    # of each nonnegative splitting. Endpoint normalization is done at vertices.
-    for j in axes(evaluation.fiber_values, 2)
-      value = evaluation.fiber_values[color, j]
-      for k in 0:(evaluation.splittings[j, root] * degree)
-        factor *= value + (T(k) / T(degree)) * alpha
+    # Normalize the full index on edges; endpoint normalization is at vertices.
+    if evaluation.index_plans === nothing
+      for j in axes(evaluation.fiber_values, 2)
+        value = evaluation.fiber_values[color, j]
+        for k in 0:(evaluation.splittings[j, root] * degree)
+          factor *= value + (T(k) / T(degree)) * alpha
+        end
+      end
+    else
+      terms = get!(evaluation.index_plans, (root, degree)) do
+        _build_edge_index_terms(data, evaluation.weight_coordinates,
+          evaluation.splittings, root, degree)
+      end
+      for (j, shift, multiplicity) in terms
+        value = evaluation.fiber_values[color, j] + (T(shift) / T(degree)) * alpha
+        factor *= value^multiplicity
       end
     end
     factor

@@ -29,7 +29,8 @@ end
 Return the required sum of Schubert codimensions for a genus-zero primary
 invariant in curve class `beta` with `n` insertions. With `bundle=E`, compute
 the requirement for the smooth zero locus of the homogeneous bundle `E`,
-subject to the supported weight condition. For positive degree the result is
+subject to the supported weight condition, or use `ConvexEulerTwist` with a
+geometric convexity certificate for a nonsplit bundle. For positive degree the result is
 `dim + c1⋅beta + n - 3`.
 At degree zero, at most three marks use the classical intersection convention
 and return `dim`; otherwise the formal degree is `dim + n - 3`, although the
@@ -61,14 +62,23 @@ variety `X`. `classes` is a vector of elements returned by [`schubert_classes`](
 `beta` is written either in marked-node order or as an ambient zero-padded
 vector. Passing a homogeneous `bundle` satisfying the supported weight
 condition computes the Euler-twisted invariant of its smooth zero locus.
-Every defining weight must pair nonnegatively with every nonparabolic
-positive coroot, and zero weights are unsupported. Smoothness and regularity
+For ordinary bundle input, every defining weight must pair nonnegatively
+with every nonparabolic positive coroot. `ConvexEulerTwist` instead assembles
+the full signed edge index of the certified actual convex bundle. Zero fiber
+weights are unsupported. Smoothness and regularity
 of the defining section are assumptions. The result is a `Rational{BigInt}`.
 Dimension-mismatched invariants and degree-zero primary invariants with
 more than three marks vanish. With at most three marks, degree zero uses
 the classical intersection integral, including the two-point pairing.
 The input classes and curve coordinates are not modified. An empty insertion
 vector requests the unmarked invariant.
+
+Use `algorithm=:branches` to resum rooted trees by triangular power-series
+recursion instead of enumerating decorated trees. This backend supports up
+to eight labeled primary insertions; unmarked invariants use the divisor
+equation. `algorithm=:trees` retains the independent original enumerator.
+An optional `progress` callback receives degree/state information in branch
+mode. Both algorithms require agreement at two exact torus points.
 
 # Examples
 ```jldoctest
@@ -84,13 +94,23 @@ julia> gromov_witten_invariant(S, [], [1])
 ```
 """
 function gromov_witten_invariant(
-  X::PartialFlagVariety, classes::AbstractVector, beta; bundle=nothing
+  X::PartialFlagVariety, classes::AbstractVector, beta; bundle=nothing,
+  algorithm=:trees, progress=nothing,
 )
-  _gromov_witten_invariant(_gw_data(X), classes, beta, bundle)
+  _gromov_witten_invariant(_gw_data(X), classes, beta, bundle; algorithm, progress)
+end
+
+"""Validate the independent localization backend selection."""
+function _check_localization_algorithm(algorithm)
+  algorithm in (:trees, :branches) ||
+    throw(ArgumentError("algorithm must be :trees or :branches"))
+  nothing
 end
 
 """Validate insertions and the dimension axiom before allocating any torus evaluation."""
-function _gromov_witten_invariant(data::_GWData, classes, beta, bundle)
+function _gromov_witten_invariant(data::_GWData, classes, beta, bundle;
+  algorithm=:trees, progress=nothing)
+  _check_localization_algorithm(algorithm)
   β = _normalize_beta(data, beta)
   class_indices = Int[_class_index(data, class) for class in classes]
   dim, c, weights = _complete_intersection_data(data, bundle)
@@ -99,11 +119,20 @@ function _gromov_witten_invariant(data::_GWData, classes, beta, bundle)
     return zero(_BigRational)
   # For more than three marks, primary insertions have no degree on M̄₀,ₙ.
   all(iszero, β) && length(classes) > 3 && return zero(_BigRational)
-  _checked_localization(data, class_indices, β, weights)
+  _checked_localization(data, class_indices, β, weights; algorithm, progress)
 end
 
 """Dispatch degree-zero integration or shared positive-degree graph evaluation with exact checks."""
-function _checked_localization(data::_GWData, classes, beta, weights)
+function _checked_localization(data::_GWData, classes, beta, weights;
+  algorithm=:trees, progress=nothing)
+  if algorithm == :branches && !all(iszero, beta)
+    values = _checked_torus_evaluations(data, weights, QQFieldElem) do evaluations
+      map(evaluations) do evaluation
+        _branch_invariant(evaluation, classes, beta; progress)
+      end
+    end
+    return _BigRational(values)
+  end
   _checked_torus_evaluations(data, weights) do evaluations
     if all(iszero, beta)
       return map(evaluation -> _degree_zero_invariant(evaluation, classes), evaluations)
@@ -124,8 +153,9 @@ function expected_gromov_witten_degree(Z::ZeroLocus, beta, n::Integer)
   )
 end
 
-function gromov_witten_invariant(Z::ZeroLocus, classes::AbstractVector, beta)
+function gromov_witten_invariant(Z::ZeroLocus, classes::AbstractVector, beta;
+  algorithm=:trees, progress=nothing)
   gromov_witten_invariant(
-    ambient_variety(Z), classes, beta; bundle=defining_bundle(Z)
+    ambient_variety(Z), classes, beta; bundle=defining_bundle(Z), algorithm, progress
   )
 end

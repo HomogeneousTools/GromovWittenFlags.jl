@@ -107,8 +107,15 @@ end
 Preflight poles and compare a complete two-point block at two exact FLINT torus
 points. Return a matrix of `Rational{BigInt}` coefficients for quantum assembly.
 """
-function _checked_pair_block(data::_GWData, classes, pairs, beta, weights)
+function _checked_pair_block(data::_GWData, classes, pairs, beta, weights;
+  algorithm=:trees, progress=nothing)
+  _check_localization_algorithm(algorithm)
   values = _checked_torus_evaluations(data, weights, QQFieldElem) do evaluations
+    if algorithm == :branches
+      return map(evaluations) do evaluation
+        _branch_pair_blocks(evaluation, classes, pairs, beta; progress)
+      end
+    end
     foreach(evaluation -> _prepare_edges!(evaluation, beta), evaluations)
     _positive_degree_pair_blocks(evaluations, classes, pairs, beta)
   end

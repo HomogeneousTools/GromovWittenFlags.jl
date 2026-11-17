@@ -40,3 +40,19 @@ identifies the adapted components, and `licenses/gwflags-LICENSE` preserves the
 upstream license unchanged. `PROVENANCE.md` records the original authors,
 translation history, Julia source commit, exact-arithmetic patch, and snapshot
 checksum. Historical reproducibility snapshots are preserved.
+
+## Branch and certified layers
+
+`BranchLocalization.jl` replaces tree enumeration by coefficient recurrences
+for rooted branches, sharing marked-source series and covered-edge exponentials.
+`CertifiedArithmetic.jl` supplies checked finite fields and fixed-size integer
+magnitude bounds. `CertifiedDenominators.jl` derives formal Gauss bounds from
+the original graph factors, with a guarded sharper strategy and a coarse fallback.
+`CertifiedLocalization.jl` owns process-local geometry, bounded worker scheduling,
+CRT uniqueness and atomic checkpoint records. Ordinary rational localization
+remains the default.
+
+`ClassicalIntegration.jl` exposes characteristic and Schubert integration on
+flags, while `CyclicAlgebra.jl` checks the finite algebra reconstructed from a
+cyclic unit. Neither utility asserts geometric Hodge-atom hypotheses.
+The experimental certified API is documented in [Certified computation](@ref).
